@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="robocup2024" type="omnicamera" name="omnicamera"/>
+  <node pkg="robocup2024" type="frontcamera" name="frontcamera"/>
+</launch>
+
