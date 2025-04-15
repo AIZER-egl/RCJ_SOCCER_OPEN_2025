@@ -135,11 +135,11 @@ int main (int argc, char **argv) {
         pub.publish(msg);
         cv::imwrite("/home/aizer/omnicamera/frame_" + std::to_string(frame_id) + ".jpg", frame);
 
-//       cv::imshow("Omni-camera", frame);
+       cv::imshow("Omni-camera", frame);
 
-  //     if (cv::waitKey(10) == KEY_ESC) {
-    //       break;
-      // }
+       if (cv::waitKey(10) == KEY_ESC) {
+           break;
+       }
     }
 
     ROS_INFO("Video loop finished");

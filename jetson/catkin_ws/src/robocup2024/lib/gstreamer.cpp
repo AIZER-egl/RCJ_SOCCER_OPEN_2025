@@ -15,6 +15,26 @@ std::string Gstreamer::get_command() {
     if ((this -> parameters).name != "nvarguscamerasrc0")
         this -> gstreamer_command += "name=" + (this -> parameters).name + " ";
 
+
+    /**
+     * sensor-id   : Set the id of the camera sensor to use. Default 0.
+     *             flags: readable, writeable
+     *             Integer. Range: 0 - 255 Default: 0
+     */
+     this -> gstreamer_command += "sensor-id=" + std::to_string((this -> parameters).sensor_id) + " ";
+
+    /**
+     * exposuretimerange : Set the exposure time range in nanoseconds. Default 0
+     *                     Use string with values of Exposure time range (low, high)
+     *                     in that order, to set the property.
+     *                     eg: exposuretimerange="34000 358733000"
+     *                     flags: readable, writeable
+     *                     String. Default: null
+     */
+    if ((this -> parameters).min_exposure_timerange != 0 && (this -> parameters).max_exposure_timerange != 0)
+        this -> gstreamer_command += "exposuretimerange=\"" + std::to_string((this -> parameters).min_exposure_timerange) + " " + std::to_string((this -> parameters).max_exposure_timerange) + "\" ";
+
+
     /**
      * Parent       : The parent of the object
      *                flags: readable, writeable
@@ -97,14 +117,6 @@ std::string Gstreamer::get_command() {
         this -> gstreamer_command += "saturation=" + std::to_string((this -> parameters).saturation) + " ";
 
     /**
-     * sensor-id   : Set the id of the camera sensor to use. Default 0.
-     *             flags: readable, writeable
-     *             Integer. Range: 0 - 255 Default: 0
-     */
-    if ((this -> parameters).sensor_id != 0)
-        this -> gstreamer_command += "sensor-id=" + std::to_string((this -> parameters).sensor_id) + " ";
-
-    /**
      * sensor-mode : Set the source sensor mode to use. Default -1 (Select the best match)
      *             flags: readable, writeable
      *             Integer. Range: -1 - 255 Default: -1
@@ -120,16 +132,6 @@ std::string Gstreamer::get_command() {
     if ((this -> parameters).total_sensor_modes != 0)
         this -> gstreamer_command += "total-sensor-modes=" + std::to_string((this -> parameters).total_sensor_modes) + " ";
 
-    /**
-     * exposuretimerange : Set the exposure time range in nanoseconds. Default 0
-     *                     Use string with values of Exposure time range (low, high)
-     *                     in that order, to set the property.
-     *                     eg: exposuretimerange="34000 358733000"
-     *                     flags: readable, writeable
-     *                     String. Default: null
-     */
-    if ((this -> parameters).min_exposure_timerange != 0 && (this -> parameters).max_exposure_timerange != 0)
-        this -> gstreamer_command += "exposuretimerange=\"" + std::to_string((this -> parameters).min_exposure_timerange) + " " + std::to_string((this -> parameters).max_exposure_timerange) + "\" ";
 
     /**
      * gainrange   : Property to adjust gain range
@@ -257,7 +259,7 @@ std::string Gstreamer::get_command() {
     this -> gstreamer_command += "! video/x-raw(memory:NVMM), ";
     this -> gstreamer_command += "width=(int)" + std::to_string((this -> parameters).width) + ", ";
     this -> gstreamer_command += "height=(int)" + std::to_string((this -> parameters).height) + ", ";
-    this -> gstreamer_command += "framerate=(fraction)" + std::to_string((this -> parameters).framerate) + "/1 ";
+    this -> gstreamer_command += "framerate=(fraction)" + std::to_string(static_cast<int>((this -> parameters).framerate)) + "/1 ";
     this -> gstreamer_command += "! nvvidconv flip-method=0 ";
     this -> gstreamer_command += "! video/x-raw, width=(int)" + std::to_string((this -> parameters).width) + ", height=(int)" + std::to_string((this -> parameters).height) + ", format=(string)BGRx ";
     this -> gstreamer_command += "! videoconvert ";

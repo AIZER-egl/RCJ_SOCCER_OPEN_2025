@@ -26,6 +26,7 @@ add_executable(frontcamera
   src/frontcamera.cpp
   lib/blob_detection.cpp
   lib/preprocessing.cpp
+  lib/gstreamer.cpp
   )
 target_link_libraries(frontcamera ${catkin_LIBRARIES})
 target_link_libraries(frontcamera ${OpenCV_LIBS})
