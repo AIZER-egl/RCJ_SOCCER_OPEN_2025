@@ -9,6 +9,10 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(OpenCV REQUIRED)
 
+# Require C++17 standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES robocup2024

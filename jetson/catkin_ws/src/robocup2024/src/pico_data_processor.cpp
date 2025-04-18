@@ -18,11 +18,11 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
 
     if (!received_data_opt) {
         ROS_WARN("Deserialization failed (likely incorrect packet size: %zu bytes, expected %zu)",
-                 msg->data.size(), ROBOT_DATA_SIZE);
+                 msg->data.size(), BINARY_SERIALIZATION_DATA_SIZE);
         return;
     }
 
-    RobotData received_data = *received_data_opt;
+    BinarySerializationData received_data = *received_data_opt;
     ROS_INFO("Deserialized Data: Yaw=%d, Kicker=%d, LDR=%d",
          received_data.compass_yaw, received_data.kicker_active, received_data.ldr_value);
 
@@ -59,8 +59,8 @@ int main (int argc, char **argv) {
 
     std::this_thread::sleep_for(std::chrono::seconds(1)); // Wait 1 second
     ROS_INFO("Sending initial 'empty' message to Pico...");
-    RobotData init_message = {};
-    std::vector<uint8_t> init_bytes = BinarySerialization::Serializer::serializeStatic(init_message);
+    BinarySerializationData init_message = {};
+    std::vector<uint8_t> init_bytes = Serializer::serialize(init_message);
 
     if (!init_bytes.empty()) {
         std_msgs::ByteMultiArray init_tx_msg;
