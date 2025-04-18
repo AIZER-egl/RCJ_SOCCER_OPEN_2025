@@ -42,9 +42,8 @@ target_link_libraries(omnicamera ${catkin_LIBRARIES})
 target_link_libraries(omnicamera ${OpenCV_LIBS})
 
 add_executable(strategy
-  src/strategy.cpp
-  lib/rpi-bitmask.cpp
-  lib/chassis.cpp
+        src/pico_data_processor.cpp
+        lib/chassis.cpp
   lib/angle.cpp
   lib/pid.cpp
 )
