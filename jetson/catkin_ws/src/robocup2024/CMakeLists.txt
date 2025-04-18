@@ -41,11 +41,12 @@ add_executable(omnicamera
 target_link_libraries(omnicamera ${catkin_LIBRARIES})
 target_link_libraries(omnicamera ${OpenCV_LIBS})
 
-add_executable(strategy
+add_executable(pico_data_processor
         src/pico_data_processor.cpp
         lib/chassis.cpp
-  lib/angle.cpp
-  lib/pid.cpp
+        lib/angle.cpp
+        lib/pid.cpp
+        lib/serializer.cpp
 )
-target_link_libraries(strategy ${catkin_LIBRARIES})
-target_link_libraries(strategy ${OpenCV_LIBS})
+target_link_libraries(pico_data_processor ${catkin_LIBRARIES})
+target_link_libraries(pico_data_processor ${OpenCV_LIBS})
