@@ -2,17 +2,17 @@
  * cd ~/Desktop/pico-lib/build
  * make
  *
- * cp ~/Documents/RoboticProjects/robocup2024/rpi_pico/build/main.uf2 /media/iker/RPI-RP2/main.uf2
+ * cp ~/Documents/RoboticProjects/RCJ_SOCCER_OPEN_2025/rpi_pico/build/main.uf2 /media/iker/RPI-RP2/main.uf2
 */
-#include <cstdint>
-#include <string>
 #include <iostream>
+#include <string>
+#include <cstdio>
 
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
 #include "hardware/gpio.h"
 #include "pico-lib/gpio.h"
-#include "lib/software/bitmask.h"
+#include "lib/software/serializer.h"
 #include "lib/software/pid.h"
 #include "lib/software/hex.h"
 #include "lib/hardware/kicker.h"
@@ -22,7 +22,6 @@
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "EndlessLoop"
-
 #define SDA 4
 #define SCL 5
 #define ARDUINO_I2C 8
@@ -34,6 +33,21 @@ float yaw = 0;
 float yaw_offset = 0;
 bool disabled = false;
 
+void sendData(BinarySerializationData& data) {
+	std::vector<uint8_t> bytes = Serializer::serialize(data);
+
+	if (!bytes.empty()) {
+		fwrite(
+			bytes.data(),
+			1,
+			bytes.size(),
+			stdout
+		);
+
+		fflush(stdout);
+	}
+}
+
 int main () {
     stdio_init_all();
     USB_Serial_Init();
@@ -42,28 +56,50 @@ int main () {
 	Kicker kicker;
 	Adafruit_BNO055 bno;
 
-	bno.begin(I2C_PORT_0, 100 * 1000, SDA, SCL);
+	// bno.begin(I2C_PORT_0, 100 * 1000, SDA, SCL);
 	motor.begin();
-	// kicker.begin();
+	kicker.begin();
 
-    pinMode(27, OUTPUT);
-	digitalWrite(27, HIGH);
+	pinMode(KICKER, OUTPUT);
+    pinMode(BUILTIN_LED, OUTPUT);
+	digitalWrite(BUILTIN_LED, HIGH);
 
-	// delay(2000);
-	// kicker.kick();
- //
-	// unsigned long last_time = millis();
- //    bool state = true;
- //
-	// for (;;) {
-	// 	motor.tick();
-	// 	kicker.tick();
- //
-	// 	if (millis() - last_time >= 2000) {
-	// 		kicker.kick();
-	// 		last_time = millis();
-	// 	}
-	// }
+	delay(2000);
+	kicker.kick();
+
+	unsigned long last_time = millis();
+	bool state = true;
+
+	BinarySerializationData data{};
+	data.motor_se_speed = 255;
+	data.motor_sw_speed = 255;
+	data.motor_ne_speed = 255;
+	data.motor_nw_speed = 255;
+	data.motor_se_rpm = 255;
+	data.motor_sw_rpm = 255;
+	data.motor_ne_rpm = 255;
+	data.motor_nw_rpm = 255;
+	data.motor_se_direction = 1;
+	data.motor_sw_direction = 1;
+	data.motor_ne_direction = 1;
+	data.motor_nw_direction = 1;
+	data.compass_yaw = -179;
+	data.kicker_active = true;
+	data.ldr_value = 255;
+	data.setting_team_id = 1;
+	data.setting_attack_goal = 1;
+
+	for (;;) {
+		motor.tick();
+		kicker.tick();
+
+		if (USB_Serial_Available()) {
+			char byte = USB_Serial_Get_Byte();
+			if (byte == '\n') {
+				sendData(data);
+			}
+		}
+	}
 }
 
 

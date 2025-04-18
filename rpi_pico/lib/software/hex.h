@@ -1,7 +1,3 @@
-//
-// Created by kali on 3/31/24.
-//
-
 #ifndef PICO_LIB_HEX_H
 #define PICO_LIB_HEX_H
 

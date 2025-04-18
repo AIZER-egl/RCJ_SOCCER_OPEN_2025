@@ -1,7 +1,3 @@
-//
-// Created by kali on 2/13/24.
-//
-
 #include "../time.h"
 
 void delay(unsigned long ms) {

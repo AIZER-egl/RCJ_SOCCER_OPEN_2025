@@ -1,14 +1,17 @@
 // Library for Raspberry pico GPIO 1.0.0 by @IkerCs / @aizer-egl
-#include "vector"
+
+#ifndef GPIO_H
+#define GPIO_H
+
+#include <string>
+#include <vector>
+
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "hardware/pwm.h"
 #include "hardware/adc.h"
-#include <string>
-#include "./usb.h"
-
-#ifndef GPIO_H
-#define GPIO_H
+#include "usb.h"
+#include "time.h"
 
 #define INPUT 0
 #define OUTPUT 1

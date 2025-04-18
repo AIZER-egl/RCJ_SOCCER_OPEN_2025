@@ -1,7 +1,5 @@
 #include "../gpio.h"
 
-#include "../time.h"
-
 void pinMode(const uint8_t pin, const uint8_t mode) {
     switch (mode) {
         case INPUT:

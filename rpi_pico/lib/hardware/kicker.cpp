@@ -20,6 +20,4 @@ void Kicker::kick() {
 	active = true;
 	previousKick = millis();
 	digitalWrite(KICKER, HIGH);
-	std::cout << "Kick" << std::endl;
-
 }

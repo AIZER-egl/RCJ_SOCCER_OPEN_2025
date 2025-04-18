@@ -1,8 +1,8 @@
 #ifndef PICO_LIB_PID_H
 #define PICO_LIB_PID_H
 
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 #include "../../pico-lib/time.h"
 
 class PID {

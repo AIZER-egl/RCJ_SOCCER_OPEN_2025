@@ -19,7 +19,7 @@ add_executable(main
 		lib/hardware/kicker.cpp
 		lib/hardware/USB_Serial.cpp
 		lib/software/pid.cpp
-		lib/software/bitmask.cpp
+		lib/software/serializer.cpp
 		lib/software/hex.cpp
 		pico-lib/definitions/gpio.cpp
 		pico-lib/definitions/i2c.cpp

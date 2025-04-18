@@ -22,7 +22,7 @@ struct BinarySerializationData {
 	uint8_t motor_ne_direction;
 	uint8_t motor_nw_direction;
 
-	uint16_t compass_yaw;
+	int16_t compass_yaw;
 
 	bool kicker_active;
 

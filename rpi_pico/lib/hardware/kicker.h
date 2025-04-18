@@ -1,8 +1,8 @@
-#include "../../pico-lib/time.h"
-#include "../../pico-lib/gpio.h"
-
 #ifndef KICKER_H
 #define KICKER_H
+
+#include "../../pico-lib/time.h"
+#include "../../pico-lib/gpio.h"
 
 #define KICKER 27
 

@@ -1,4 +1,6 @@
-// Library for Raspberry pico Serial 1.0.0 by @IkerCs / @aizer-egl
+#ifndef SERIAL_H
+#define SERIAL_H
+
 #include <optional>
 #include <iostream>
 #include <string>
@@ -11,9 +13,6 @@
 #define USB_TX 0
 #define USB_RX 1
 #define USB_PORT 0
-
-#ifndef SERIAL_H
-#define SERIAL_H
 
 class Serial {
 public:

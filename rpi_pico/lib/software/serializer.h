@@ -1,15 +1,23 @@
-#ifndef PICO_LIB_BINARY_SERIALIZATION_H
-#define PICO_LIB_BINARY_SERIALIZATION_H
+#ifndef PICO_LIB_SERIALIZER_H
+#define PICO_LIB_SERIALIZER_H
 
-#include "BinarySerializationData.h"
+#include "binarySerializationData.h"
 #include <cstdint>
 #include <cstddef>
 #include <vector>
+#include <optional>
+#include <cstring>
 
-namespace BinarySerialization {
+class Serializer {
 public:
-	BinarySerialization() = default;
+	Serializer() = delete;
+	~Serializer() = delete;
+	Serializer(const Serializer&) = delete;
+	Serializer& operator=(const Serializer&) = delete;
 
-}
+	static std::vector<uint8_t> serialize(const BinarySerializationData& data);
+	static std::optional<BinarySerializationData> deserialize(const std::vector<uint8_t>& buffer);
+	static std::optional<BinarySerializationData> deserialize(const uint8_t* buffer, size_t size);
+};
 
-#endif //PICO_LIB_BINARY_SERIALIZATION_H
+#endif //PICO_LIB_SERIALIZER_H

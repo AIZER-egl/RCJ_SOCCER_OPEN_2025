@@ -1,7 +1,3 @@
-//
-// Created by kali on 2/12/24.
-//
-
 #include "../i2c.h"
 
 I2C::I2C(uint8_t sda, uint8_t scl) {

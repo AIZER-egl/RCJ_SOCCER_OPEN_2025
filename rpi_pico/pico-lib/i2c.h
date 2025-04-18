@@ -1,7 +1,3 @@
-//
-// Created by kali on 2/12/24.
-//
-
 #ifndef PICO_LIB_I2C_H
 #define PICO_LIB_I2C_H
 
