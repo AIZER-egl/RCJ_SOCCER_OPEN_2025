@@ -42,6 +42,12 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
         tx_msg.data = bytes_to_send;
         pub_serial_tx.publish(tx_msg);
         ROS_INFO("Published %zu modified bytes to /pico/serial_tx", bytes_to_send.size());
+
+        ROS_INFO("Sending newline prompt to Pico...");
+        std_msgs::ByteMultiArray newline_msg;
+        newline_msg.data.push_back('\n');
+        pub_serial_tx.publish(newline_msg);
+        ROS_INFO("Published newline prompt to /pico/serial_tx");
     } else {
         ROS_ERROR("Serialization of modified data failed (empty byte vector)!");
     }
@@ -67,7 +73,13 @@ int main (int argc, char **argv) {
         init_tx_msg.data = init_bytes;
         pub_serial_tx.publish(init_tx_msg);
         ROS_INFO("Published initial message (%zu bytes) to /pico/serial_tx", init_bytes.size());
-    } else {
+
+        ROS_INFO("Sending newline prompt to Pico...");
+        std_msgs::ByteMultiArray newline_msg;
+        newline_msg.data.push_back('\n'); // Add the newline character (byte 0x0a)
+        pub_serial_tx.publish(newline_msg);
+        ROS_INFO("Published newline prompt to /pico/serial_tx");
+} else {
         ROS_ERROR("Serialization of initial empty message failed!");
     }
 
