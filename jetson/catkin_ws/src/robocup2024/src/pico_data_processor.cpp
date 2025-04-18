@@ -35,7 +35,7 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
 
     ROS_INFO("Modified Data: Setting motor speeds to 0 for TX.");
 
-    std::vector<uint8_t> bytes_to_send = Serializer::serialize(data_to_send);
+    std::vector<int8_t> bytes_to_send = Serializer::serialize(data_to_send);
 
     if (!bytes_to_send.empty()) {
         std_msgs::ByteMultiArray tx_msg;
@@ -60,7 +60,7 @@ int main (int argc, char **argv) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     ROS_INFO("Sending initial 'empty' message to Pico...");
     BinarySerializationData init_message = {};
-    std::vector<uint8_t> init_bytes = Serializer::serialize(init_message);
+    std::vector<int8_t> init_bytes = Serializer::serialize(init_message);
 
     if (!init_bytes.empty()) {
         std_msgs::ByteMultiArray init_tx_msg;
