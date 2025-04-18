@@ -7,6 +7,8 @@
 #include <optional>
 #include <cstring>
 
+#include "binarySerializationData.h"
+
 class Serializer {
 public:
 	Serializer() = delete;
