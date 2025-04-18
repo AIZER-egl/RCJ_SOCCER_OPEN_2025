@@ -35,7 +35,13 @@ def serial_read_thread(pub_serial_rx):
                 rospy.logdebug(f"Received packet ({len(packet)} bytes): {packet.hex()}")
 
                 msg = ByteMultiArray()
-                msg.data = packet
+                try:
+                    format_string = f'{SERIAL_PACKET_SIZE}b'
+                    signed_values_tuple = struct.unpack(format_string, packet)                   
+                    msg.data = signed_values_tuple
+                except struct.error as e:
+                    rospy.logerr(f"Failed to unpack serial data for ROS msg: {e}. Packet size: {len(packet)}")
+
                 pub_serial_rx.publish(msg)
                 rospy.loginfo(f"Published {len(packet)} bytes to /pico/serial_rx")
 
@@ -51,25 +57,39 @@ def serial_read_thread(pub_serial_rx):
     rospy.loginfo("Serial read thread finished.")
 
 def serial_tx_callback(msg):
-    global serial_port
+    global serial_port, serial_lock, SERIAL_PACKET_SIZE
+
+    try:
+        rospy.loginfo(f"DEBUG: Callback entered. msg.data type: {type(msg.data)}, value: {msg.data}")
+    except Exception as e:
+        rospy.logerr(f"DEBUG: Error accessing msg.data at start of callback: {e}")
+        return
+
     rospy.loginfo(f"Received {len(msg.data)} bytes on /pico/serial_tx")
 
     if serial_port and serial_port.is_open:
         try:
-            data_to_send = bytes(msg.data)
 
-            if len(data_to_send) != SERIAL_PACKET_SIZE:
-                rospy.logwarn(f"Received data packet of unexpected size ({len(data_to_send)} bytes), expected {SERIAL_PACKET_SIZE}. Sending anyway.")
+            unsigned_values = [(val + 256) % 256 for val in msg.data]
+            data_to_send = bytearray(unsigned_values)
+
+            if len(data_to_send) != SERIAL_PACKET_SIZE and len(data_to_send) != 1:
+                 rospy.logwarn(f"Received data packet of unexpected size ({len(data_to_send)} bytes), expected {SERIAL_PACKET_SIZE} or 1. Sending anyway.")
 
             with serial_lock:
                 bytes_written = serial_port.write(data_to_send)
-
-            rospy.loginfo(f"Wrote {bytes_written} bytes to serial port: {data_to_send.hex()}")
+                rospy.loginfo(f"Wrote {bytes_written} bytes to serial port: {data_to_send.hex()} (hex)")
 
         except serial.SerialException as e:
             rospy.logerr(f"Serial write error: {e}")
+        except ValueError as e:
+             rospy.logerr(f"Error converting data for serial port (ValueError): {e}. Original data: {msg.data}")
+        except TypeError as e:
+             rospy.logerr(f"Error converting data for serial port (TypeError): {e}. Original data type: {type(msg.data)}")
         except Exception as e:
-            rospy.logerr(f"Error writing to serial port: {e}")
+             rospy.logerr(f"Error writing to serial port: {e}")
+
+
     else:
         rospy.logwarn("Serial port not available, cannot send data.")
 
