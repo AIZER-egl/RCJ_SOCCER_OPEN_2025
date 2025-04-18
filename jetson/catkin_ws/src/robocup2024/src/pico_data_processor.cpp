@@ -26,7 +26,7 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
     ROS_INFO("Deserialized Data: Yaw=%d, Kicker=%d, LDR=%d",
          received_data.compass_yaw, received_data.kicker_active, received_data.ldr_value);
 
-    RobotData data_to_send = received_data;
+    BinarySerializationData data_to_send = received_data;
 
     data_to_send.motor_se_speed = 0;
     data_to_send.motor_sw_speed = 0;
@@ -57,7 +57,7 @@ int main (int argc, char **argv) {
     pub_serial_tx = nh.advertise<std_msgs::ByteMultiArray>("/pico/serial_tx", 10);
     ros::Subscriber sub_serial_rx = nh.subscribe("/pico/serial_rx", 10, serialRxCallback);
 
-    std::this_thread::sleep_for(std::chrono::seconds(1)); // Wait 1 second
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     ROS_INFO("Sending initial 'empty' message to Pico...");
     BinarySerializationData init_message = {};
     std::vector<uint8_t> init_bytes = Serializer::serialize(init_message);
