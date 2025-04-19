@@ -73,6 +73,7 @@ def serial_tx_callback(msg):
         return
 
     rospy.loginfo(f"Received {len(msg.data)} bytes on /pico/serial_tx")
+    t_callback_start = rospy.Time.now() # Timestamp inicio callback
 
     if serial_port and serial_port.is_open:
         try:
@@ -87,26 +88,44 @@ def serial_tx_callback(msg):
             data_to_send = bytes(unsigned_byte_list)
 
             if len(data_to_send) != (SERIAL_PACKET_SIZE + 1):
-                 rospy.logwarn(f"Received data packet of unexpected size ({len(data_to_send)} bytes), expected {SERIAL_PACKET_SIZE + 1}. Sending anyway.")
+                rospy.logwarn(f"Received data packet of unexpected size ({len(data_to_send)} bytes), expected {SERIAL_PACKET_SIZE + 1}. Sending anyway.")
 
+            rospy.loginfo(f"Attempting to acquire lock...")
+            t_before_lock = rospy.Time.now()
             with serial_lock:
+                t_after_lock = rospy.Time.now()
+                lock_wait_duration = (t_after_lock - t_before_lock).to_sec()
+                rospy.loginfo(f"Lock acquired (waited {lock_wait_duration:.4f}s). Calling write...")
+
+                t_before_write = rospy.Time.now()
                 bytes_written = serial_port.write(data_to_send)
-                rospy.loginfo(f"Wrote {bytes_written} bytes to serial port: {data_to_send.hex()} (hex)")
+                t_after_write = rospy.Time.now()
+                write_duration = (t_after_write - t_before_write).to_sec()
+                # Usar bytes_written aquí para asegurar que write() terminó antes del log
+                rospy.loginfo(f"Write returned {bytes_written} bytes (took {write_duration:.4f}s). Calling flush...")
+
+                t_before_flush = rospy.Time.now()
                 serial_port.flush()
-                rospy.loginfo(f"Bytes sent and buffer flushed")
+                t_after_flush = rospy.Time.now()
+                flush_duration = (t_after_flush - t_before_flush).to_sec()
+                rospy.loginfo(f"Flush returned (took {flush_duration:.4f}s). Releasing lock.")
 
         except serial.SerialException as e:
             rospy.logerr(f"Serial write error: {e}")
         except ValueError as e:
-             rospy.logerr(f"Error converting data for serial port (ValueError): {e}. Original data: {msg.data}")
+            rospy.logerr(f"Error converting data for serial port (ValueError): {e}. Original data: {msg.data}")
         except TypeError as e:
-             rospy.logerr(f"Error converting data for serial port (TypeError): {e}. Original data type: {type(msg.data)}")
+            rospy.logerr(f"Error converting data for serial port (TypeError): {e}. Original data type: {type(msg.data)}")
         except Exception as e:
-             rospy.logerr(f"Error writing to serial port: {e}")
-
+            rospy.logerr(f"Error writing to serial port: {e}")
 
     else:
         rospy.logwarn("Serial port not available, cannot send data.")
+
+
+    t_callback_end = rospy.Time.now()
+    callback_duration = (t_callback_end - t_callback_start).to_sec()
+    rospy.loginfo(f"Callback finished (total duration {callback_duration:.4f}s)")
 
 def main():
     global serial_port
