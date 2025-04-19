@@ -17,7 +17,6 @@
 #include "lib/software/hex.h"
 #include "lib/hardware/kicker.h"
 #include "lib/hardware/motor.h"
-#include "lib/hardware/USB_Serial.h"
 #include "lib/hardware/compass_classes.h"
 
 #pragma clang diagnostic push
@@ -54,7 +53,6 @@ void sendData(BinarySerializationData& data) {
 
 int main () {
     stdio_init_all();
-    USB_Serial_Init();
 
 	Motor motor;
 	Kicker kicker;
@@ -104,8 +102,9 @@ int main () {
 		kicker.tick();
 		bno.tick();
 
-		if (USB_Serial_Available()) {
-			char byte = USB_Serial_Get_Byte();
+		int received_char;
+		while ((received_char = getchar_timeout_us(0)) != PICO_ERROR_TIMEOUT) {
+			char byte = (char)received_char;
 			if (byte == '\n') {
 				std::optional<BinarySerializationData> receivedData = Serializer::deserialize(message);
 				if (receivedData.has_value()) {
@@ -121,6 +120,9 @@ int main () {
 				message.clear();
 			} else {
 				message.push_back(byte);
+			}
+			if (message.size() > 100) {
+				message.clear();
 			}
 		}
 
