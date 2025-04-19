@@ -38,7 +38,9 @@ def serial_read_thread(pub_serial_rx):
                     rospy.logdebug(f"Received packet with expected length {actual_length} bytes.")
                 else:
                     rospy.logwarn(f"Received packet with unexpected length: {actual_length} bytes "
-                        f"(expected {SERIAL_PACKET_SIZE}). Data (hex): {payload_bytes.hex()}")
+                        f"(expected {SERIAL_PACKET_SIZE}). Data (hex): {payload_bytes.hex()}"
+                        f"\nreceived bytes: {line_bytes}"
+                        )
 
                 msg = ByteMultiArray()
                 msg.data = list(payload_bytes)
