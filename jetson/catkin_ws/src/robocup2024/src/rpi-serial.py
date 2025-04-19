@@ -31,7 +31,7 @@ def serial_read_thread(pub_serial_rx):
                 line_bytes = serial_port.readline()
 
             if line_bytes:
-                rospy.loginfo(f"Received package with length: {line_bytes} bytes")
+                rospy.loginfo(f"Received package with length: {len(line_bytes)} bytes")
                 cleaned_bytes = line_bytes.rstrip()
 
                 if len(cleaned_bytes) == SERIAL_PACKET_SIZE:
@@ -40,10 +40,17 @@ def serial_read_thread(pub_serial_rx):
                     rospy.logwarn(f"Received packet with unexpected length: {len(cleaned_bytes)} bytes "
                                   f"(expected {SERIAL_PACKET_SIZE}). Data (hex): {line_bytes.hex()}")
 
+                signed_byte_list = []
+                for byte_val in cleaned_bytes:
+                    if byte_val > 127:
+                        signed_byte_list.append(byte_val - 256)
+                    else:
+                        signed_byte_list.append(byte_val)
+
                 msg = ByteMultiArray()
-                msg.data = cleaned_bytes
+                msg.data = signed_byte_list
                 pub_serial_rx.publish(msg)
-                rospy.loginfo(f"Published {len(cleaned_bytes)} bytes to /pico/serial_rx")
+                rospy.loginfo(f"Published {len(signed_byte_list)} bytes to /pico/serial_rx")
         except serial.SerialException as e:
             rospy.logerr(f"Serial read error: {e}. Closing port and exiting thread.")
             if serial_port and serial_port.is_open:
