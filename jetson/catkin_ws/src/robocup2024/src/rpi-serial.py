@@ -41,7 +41,7 @@ def serial_read_thread(pub_serial_rx):
                                   f"(expected {SERIAL_PACKET_SIZE}). Data (hex): {line_bytes.hex()}")
 
                 msg = ByteMultiArray()
-                msg.data = list(cleaned_bytes)
+                msg.data = cleaned_bytes
                 pub_serial_rx.publish(msg)
                 rospy.loginfo(f"Published {len(cleaned_bytes)} bytes to /pico/serial_rx")
         except serial.SerialException as e:
