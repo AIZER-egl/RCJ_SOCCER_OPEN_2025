@@ -45,6 +45,7 @@ void sendData(BinarySerializationData& data) {
 			stdout
 		);
 
+		putchar('\n');
 		fflush(stdout);
 	}
 }
