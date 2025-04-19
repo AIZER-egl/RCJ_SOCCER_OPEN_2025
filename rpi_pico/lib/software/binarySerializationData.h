@@ -12,17 +12,22 @@ struct BinarySerializationData {
 	uint8_t motor_ne_speed;
 	uint8_t motor_nw_speed;
 
-	uint8_t motor_se_rpm;
-	uint8_t motor_sw_rpm;
-	uint8_t motor_ne_rpm;
-	uint8_t motor_nw_rpm;
+	float motor_se_rpm;
+	float motor_sw_rpm;
+	float motor_ne_rpm;
+	float motor_nw_rpm;
 
-	uint8_t motor_se_direction;
-	uint8_t motor_sw_direction;
-	uint8_t motor_ne_direction;
-	uint8_t motor_nw_direction;
+	int8_t motor_se_direction;
+	int8_t motor_sw_direction;
+	int8_t motor_ne_direction;
+	int8_t motor_nw_direction;
 
 	int16_t compass_yaw;
+
+	int16_t robot_direction;
+	int16_t robot_speed;
+	int16_t robot_facing;
+	bool robot_stop;
 
 	bool kicker_active;
 

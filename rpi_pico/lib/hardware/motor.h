@@ -8,6 +8,7 @@
 #include "../../pico-lib/time.h"
 #include "../../pico-lib/usb.h"
 #include "../../pico-lib/gpio.h"
+#include "../software/binarySerializationData.h"
 
 #define MOTOR_SE_DIR 12
 #define MOTOR_SE_PWM 13
@@ -51,6 +52,7 @@ public:
 
 	struct individualMotor {
 		uint8_t id{};
+		int8_t direction{};
 		uint16_t speed{};
 		double rpm{};
 
@@ -87,7 +89,7 @@ public:
 	void moveNE (int16_t rpm);
 	void moveNW (int16_t rpm);
 
-	void begin ();
+	void begin (BinarySerializationData& data);
 
 	void stop ();
 
@@ -97,6 +99,7 @@ public:
 
 	void rotate (int16_t angle);
 private:
+	BinarySerializationData* dataPtr;
 	unsigned long long previousTick{};
 };
 

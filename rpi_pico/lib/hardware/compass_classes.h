@@ -38,6 +38,7 @@
 #include <iostream>
 #include "hardware/gpio.h"
 #include "hardware/i2c.h"
+#include "../software/binarySerializationData.h"
 
 /** BNO055 Address A **/
 #define BNO055_ADDRESS_A (0x28)
@@ -297,7 +298,7 @@ public:
 
     Adafruit_BNO055(int32_t sensorID = -1, uint8_t address = BNO055_ADDRESS_A);
 
-    bool begin(bool port, uint32_t baud, uint8_t sda, uint8_t scl, adafruit_bno055_opmode_t mode = OPERATION_MODE_NDOF);
+    bool begin(bool port, uint32_t baud, uint8_t sda, uint8_t scl, BinarySerializationData& data, adafruit_bno055_opmode_t mode = OPERATION_MODE_NDOF);
     bool isAlive();
     void setMode(adafruit_bno055_opmode_t mode);
     adafruit_bno055_opmode_t getMode();
@@ -324,10 +325,15 @@ public:
     void enterSuspendMode();
     void enterNormalMode();
 
+    void tick();
+
     float getYaw ();
     float getPitch ();
     float getRoll ();
 
+    float yaw{};
+    float pitch{};
+    float roll{};
 private:
     uint8_t read8(adafruit_bno055_reg_t);
     bool readLen(adafruit_bno055_reg_t, uint8_t *buffer, uint8_t len);
@@ -337,7 +343,9 @@ private:
     adafruit_bno055_opmode_t _mode;
     uint8_t _address;
 
-    i2c_inst_t * _port;
+    i2c_inst_t * _port{};
+    BinarySerializationData* dataPtr;
+    unsigned long long previous_measure{};
 };
 
 #endif

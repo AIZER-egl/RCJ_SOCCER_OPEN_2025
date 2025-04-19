@@ -32,6 +32,7 @@
 float yaw = 0;
 float yaw_offset = 0;
 bool disabled = false;
+std::vector<uint8_t> message = {};
 
 void sendData(BinarySerializationData& data) {
 	std::vector<uint8_t> bytes = Serializer::serialize(data);
@@ -56,48 +57,88 @@ int main () {
 	Kicker kicker;
 	Adafruit_BNO055 bno;
 
-	// bno.begin(I2C_PORT_0, 100 * 1000, SDA, SCL);
-	motor.begin();
-	kicker.begin();
+	unsigned long long last_kicker_time = millis();
+	unsigned long long last_motor_time = millis();
+	bool state = true;
+
+	BinarySerializationData data{};
+	data.motor_se_speed = 0;
+	data.motor_sw_speed = 0;
+	data.motor_ne_speed = 0;
+	data.motor_nw_speed = 0;
+	data.motor_se_rpm = 0;
+	data.motor_sw_rpm = 0;
+	data.motor_ne_rpm = 0;
+	data.motor_nw_rpm = 0;
+	data.motor_se_direction = 1;
+	data.motor_sw_direction = 1;
+	data.motor_ne_direction = 1;
+	data.motor_nw_direction = 1;
+	data.compass_yaw = 0;
+	data.robot_direction = 0;
+    data.robot_speed = 0;
+    data.robot_facing = 0;
+    data.robot_stop = false;
+	data.kicker_active = false;
+	data.ldr_value = 255;
+	data.setting_team_id = 1;
+	data.setting_attack_goal = 1;
+
+    bno.begin(I2C_PORT_0, 100 * 1000, SDA, SCL, data);
+    motor.begin(data);
+    kicker.begin(data);
 
 	pinMode(KICKER, OUTPUT);
-    pinMode(BUILTIN_LED, OUTPUT);
+	pinMode(BUILTIN_LED, OUTPUT);
 	digitalWrite(BUILTIN_LED, HIGH);
 
 	delay(2000);
 	kicker.kick();
 
-	unsigned long last_time = millis();
-	bool state = true;
-
-	BinarySerializationData data{};
-	data.motor_se_speed = 255;
-	data.motor_sw_speed = 255;
-	data.motor_ne_speed = 255;
-	data.motor_nw_speed = 255;
-	data.motor_se_rpm = 255;
-	data.motor_sw_rpm = 255;
-	data.motor_ne_rpm = 255;
-	data.motor_nw_rpm = 255;
-	data.motor_se_direction = 1;
-	data.motor_sw_direction = 1;
-	data.motor_ne_direction = 1;
-	data.motor_nw_direction = 1;
-	data.compass_yaw = -179;
-	data.kicker_active = true;
-	data.ldr_value = 255;
-	data.setting_team_id = 1;
-	data.setting_attack_goal = 1;
-
 	for (;;) {
 		motor.tick();
 		kicker.tick();
+		bno.tick();
 
 		if (USB_Serial_Available()) {
 			char byte = USB_Serial_Get_Byte();
 			if (byte == '\n') {
-				sendData(data);
+				std::optional<BinarySerializationData> receivedData = Serializer::deserialize(message);
+				if (receivedData.has_value()) {
+					data.robot_direction = receivedData.value().robot_direction;
+					data.robot_speed = receivedData.value().robot_speed;
+					data.robot_facing = receivedData.value().robot_facing;
+					data.robot_stop = receivedData.value().robot_stop;
+					data.kicker_active = receivedData.value().kicker_active;
+
+					sendData(data);
+				}
+			} else {
+				message.push_back(byte);
 			}
+		}
+
+		if (millis() - last_kicker_time >= 25) {
+			if (data.kicker_active) {
+				kicker.kick();
+			}
+
+			last_kicker_time = millis();
+		}
+
+		if (millis() - last_motor_time >= 25) {
+			if (data.robot_stop) {
+				motor.stop();
+			} else {
+				motor.move(
+					data.robot_direction,
+					data.robot_speed,
+					data.robot_facing,
+					data.compass_yaw
+					);
+			}
+
+			last_motor_time = millis();
 		}
 	}
 }

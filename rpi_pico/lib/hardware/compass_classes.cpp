@@ -29,6 +29,8 @@
 
 #include "compass_classes.h"
 
+#include "../software/binarySerializationData.h"
+
 /*!
  *  @brief  Instantiates a new Adafruit_BNO055 class
  *  @param  sensorID
@@ -38,7 +40,7 @@
  *  @param  theWire
  *          Wire object
  */
-Adafruit_BNO055::Adafruit_BNO055(int32_t sensorID, uint8_t address) {
+Adafruit_BNO055::Adafruit_BNO055(int32_t sensorID, uint8_t address) : dataPtr(nullptr) {
     _sensorID = sensorID;
     _address = address;
 }
@@ -73,7 +75,7 @@ Adafruit_BNO055::Adafruit_BNO055(int32_t sensorID, uint8_t address) {
  *            OPERATION_MODE_NDOF]
  *  @return true if process is successful
  */
-bool Adafruit_BNO055::begin(bool port, uint32_t baud, uint8_t sda, uint8_t scl, adafruit_bno055_opmode_t mode) {
+bool Adafruit_BNO055::begin(bool port, uint32_t baud, uint8_t sda, uint8_t scl, BinarySerializationData& data, adafruit_bno055_opmode_t mode) {
     if (port == I2C_PORT_0) {
         _port = i2c0;
     } else if (port == I2C_PORT_1) {
@@ -133,6 +135,8 @@ bool Adafruit_BNO055::begin(bool port, uint32_t baud, uint8_t sda, uint8_t scl, 
     /* Set the requested operating mode (see section 3.3) */
     setMode(mode);
     sleep_ms(20);
+
+    dataPtr = &data;
 
     return true;
 }
@@ -750,16 +754,30 @@ bool Adafruit_BNO055::readLen(adafruit_bno055_reg_t reg, uint8_t *buffer,
     return i2c_read_blocking(_port, _address, buffer, len, false);
 }
 
+void Adafruit_BNO055::tick() {
+    if (!dataPtr) return;
+
+    if ((time_us_64() / 1000) - previous_measure >= 25) {
+        yaw = getYaw();
+        pitch = getPitch();
+        roll = getRoll();
+
+        dataPtr -> compass_yaw = static_cast<int16_t>(yaw);
+
+        previous_measure = time_us_64() / 1000;
+    }
+}
+
 float Adafruit_BNO055::getYaw() {
-    float v = getVector(Adafruit_BNO055::VECTOR_EULER)[0];
+    float v = getVector(VECTOR_EULER)[0];
     v = (v > 180.0) ? (v - 360.0) : v;
     return v;
 }
 
 float Adafruit_BNO055::getPitch() {
-    return getVector(Adafruit_BNO055::VECTOR_EULER)[1];
+    return getVector(VECTOR_EULER)[1];
 }
 
 float Adafruit_BNO055::getRoll() {
-    return getVector(Adafruit_BNO055::VECTOR_EULER)[2];
+    return getVector(VECTOR_EULER)[2];
 }

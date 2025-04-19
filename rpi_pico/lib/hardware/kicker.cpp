@@ -1,23 +1,30 @@
 #include "kicker.h"
 
-Kicker::Kicker() = default;
+Kicker::Kicker() : dataPtr(nullptr) {};
 
-void Kicker::begin() {
+void Kicker::begin(BinarySerializationData& data) {
+	dataPtr = &data;
 	pinMode(KICKER, OUTPUT);
-	previousKick = millis();
+	previous_kick = millis();
 }
 
 void Kicker::tick() {
-	if (active && millis() - previousKick >= 500) {
-		active = false;
+	if (!dataPtr) return;
+
+	if (kicker_status && millis() - previous_kick >= 500) {
+		kicker_status = false;
+		dataPtr -> kicker_active = false;
 		digitalWrite(KICKER, LOW);
 	}
 }
 
-void Kicker::kick() {
-	if (active) return;
 
-	active = true;
-	previousKick = millis();
+void Kicker::kick() {
+	if (!dataPtr) return;
+	if (kicker_status) return;
+
+	kicker_status = true;
+	dataPtr -> kicker_active = true;
+	previous_kick = millis();
 	digitalWrite(KICKER, HIGH);
 }

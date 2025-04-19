@@ -10,9 +10,11 @@ unsigned long long previous_pulses_SW_timestamp;
 unsigned long long previous_pulses_NE_timestamp;
 unsigned long long previous_pulses_NW_timestamp;
 
-Motor::Motor() = default;
+Motor::Motor() : dataPtr(nullptr) {};
 
-void Motor::begin () {
+void Motor::begin (BinarySerializationData& data) {
+	dataPtr = &data;
+
 	motorNE.id = MOTOR_NE;
 	motorNW.id = MOTOR_NW;
 	motorSE.id = MOTOR_SE;
@@ -71,11 +73,30 @@ void Motor::begin () {
 }
 
 void Motor::tick() {
+	if (!dataPtr) return;
+
 	if (millis() - previousTick >= 20) {
 		motorSE.getRPM();
 		motorSW.getRPM();
 		motorNE.getRPM();
 		motorNW.getRPM();
+
+		dataPtr -> motor_se_speed = motorSE.speed;
+		dataPtr -> motor_se_direction = motorSE.direction;
+		dataPtr -> motor_se_rpm = static_cast<float>(motorSE.rpm);
+
+		dataPtr -> motor_sw_speed = motorSW.speed;
+		dataPtr -> motor_sw_direction = motorSW.direction;
+		dataPtr -> motor_sw_rpm = static_cast<float>(motorSW.rpm);
+
+		dataPtr -> motor_ne_speed = motorNE.speed;
+		dataPtr -> motor_ne_direction = motorNE.direction;
+		dataPtr -> motor_ne_rpm = static_cast<float>(motorNE.rpm);
+
+		dataPtr -> motor_nw_speed = motorNW.speed;
+		dataPtr -> motor_nw_direction = motorNW.direction;
+		dataPtr -> motor_nw_rpm = static_cast<float>(motorNW.rpm);
+
 		previousTick = millis();
 	}
 }
@@ -85,7 +106,8 @@ void Motor::setSpeedSE (int16_t speed) {
 
 	analogWrite(MOTOR_SE_PWM, std::abs(speed));
 	digitalWrite(MOTOR_SE_DIR, speed > 0);
-	motorSE.speed = speed;
+	motorSE.speed = std::abs(speed);
+	motorSE.direction = speed > 0 ? 1 : -1;
 }
 
 void Motor::setSpeedSW (int16_t speed) {
@@ -93,7 +115,8 @@ void Motor::setSpeedSW (int16_t speed) {
 
 	analogWrite(MOTOR_SW_PWM, std::abs(speed));
 	digitalWrite(MOTOR_SW_DIR, speed > 0);
-	motorSW.speed = speed;
+	motorSW.speed = std::abs(speed);
+	motorSW.direction = speed > 0 ? 1 : -1;
 }
 
 void Motor::setSpeedNE (int16_t speed) {
@@ -101,7 +124,8 @@ void Motor::setSpeedNE (int16_t speed) {
 
 	analogWrite(MOTOR_NE_PWM, std::abs(speed));
 	digitalWrite(MOTOR_NE_DIR, speed > 0);
-	motorNE.speed = speed;
+	motorNE.speed = std::abs(speed);
+	motorNE.direction = speed > 0 ? 1 : -1;
 }
 
 void Motor::setSpeedNW (int16_t speed) {
@@ -109,7 +133,8 @@ void Motor::setSpeedNW (int16_t speed) {
 
 	analogWrite(MOTOR_NW_PWM, std::abs(speed));
 	digitalWrite(MOTOR_NW_DIR, speed > 0);
-	motorNW.speed = speed;
+	motorNW.speed = std::abs(speed);
+	motorNW.direction = speed > 0 ? 1 : -1;
 }
 
 void Motor::individualMotor::callback(const unsigned int gpio, unsigned long events) {
@@ -159,6 +184,8 @@ void Motor::stop() {
 	setSpeedSW(0);
 	setSpeedNE(0);
 	setSpeedNW(0);
+
+	dataPtr->robot_stop = false;
 }
 
 void Motor::moveSE(const int16_t rpm) {
