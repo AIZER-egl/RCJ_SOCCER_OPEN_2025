@@ -97,21 +97,26 @@ int main (int argc, char **argv) {
         init_tx_msg.data.push_back('\n');
         pub_serial_tx.publish(init_tx_msg);
         ROS_INFO("Published initial message (%zu bytes) to /pico/serial_tx", init_bytes.size());
-} else {
+    } else {
         ROS_ERROR("Serialization of initial empty message failed!");
     }
 
     unsigned long long previous_time = millis();
-    // Toggle kicker kick every 10 seconds
+    ros::Rate loop_rate(15);
+
+    ROS_INFO("Ready to process incoming messages."); // Mover esto antes del bucle
+
     while (ros::ok()) {
-        if (millis() - previous_time >= 10000) {
+        if (millis() - previous_time >= 10000) { // 10 segundos
             ROS_INFO("Updating BinarySerializationData variable to activate kicker");
             data.kicker_active = true;
             expect_new_kicker_active_value = true;
             previous_time = millis();
         }
-    }
 
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
     ROS_INFO("Ready to process incoming messages.");
 
     return 0;
