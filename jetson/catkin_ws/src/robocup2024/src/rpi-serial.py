@@ -27,8 +27,20 @@ def serial_read_thread(pub_serial_rx):
     while not rospy.is_shutdown():
         line_bytes = None
         try:
+            rospy.logdebug("Read thread: Attempting to acquire lock...") # Log opcional
+            t_before_read_lock = rospy.Time.now()
             with serial_lock:
+                t_after_read_lock = rospy.Time.now()
+                lock_wait_duration = (t_after_read_lock - t_before_read_lock).to_sec()
+
+                rospy.logdebug(f"Read thread: Lock acquired (waited {lock_wait_duration:.4f}s). Calling readline...")
+
+                t_before_readline = rospy.Time.now()
                 line_bytes = serial_port.readline()
+                t_after_readline = rospy.Time.now()
+                readline_duration = (t_after_readline - t_before_readline).to_sec()
+
+                rospy.loginfo(f"Read thread: Readline returned after {readline_duration:.4f}s. Lock held for this duration.")
 
             if line_bytes:
                 rospy.loginfo(f"Received package with length: {len(line_bytes)} bytes")
