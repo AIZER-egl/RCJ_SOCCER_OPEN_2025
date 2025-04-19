@@ -31,21 +31,19 @@ def serial_read_thread(pub_serial_rx):
                 line_bytes = serial_port.readline()
 
             if line_bytes:
-                rospy.loginfo(f"Received package with length: {line_bytes} bytes\n{line_bytes.hex()}")
-                # payload_bytes = line_bytes.rstrip(b'\r\n')
-                # actual_length = len(payload_bytes)
-                #
-                # if actual_length == SERIAL_PACKET_SIZE:
-                #     rospy.logdebug(f"Received packet with expected length {actual_length} bytes.")
-                # else:
-                #     rospy.logwarn(f"Received packet with unexpected length: {actual_length} bytes "
-                #         f"(expected {SERIAL_PACKET_SIZE}). Data (hex): {payload_bytes.hex()}"
-                #         f"\nRaw message {len(payload_bytes)} bytes.")
-                #
-                # msg = ByteMultiArray()
-                # msg.data = list(payload_bytes)
-                # pub_serial_rx.publish(msg)
-                # rospy.loginfo(f"Published {actual_length} bytes to /pico/serial_rx")
+                rospy.loginfo(f"Received package with length: {line_bytes} bytes")
+                cleaned_bytes = line_bytes.rstrip()
+
+                if len(cleaned_bytes) == SERIAL_PACKET_SIZE:
+                    rospy.loginfo(f"Received packet with expected length {len(cleaned_bytes)} bytes.")
+                else:
+                    rospy.logwarn(f"Received packet with unexpected length: {len(cleaned_bytes)} bytes "
+                                  f"(expected {SERIAL_PACKET_SIZE}). Data (hex): {line_bytes.hex()}")
+
+                msg = ByteMultiArray()
+                msg.data = list(cleaned_bytes)
+                pub_serial_rx.publish(msg)
+                rospy.loginfo(f"Published {len(cleaned_bytes)} bytes to /pico/serial_rx")
         except serial.SerialException as e:
             rospy.logerr(f"Serial read error: {e}. Closing port and exiting thread.")
             if serial_port and serial_port.is_open:
