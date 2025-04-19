@@ -14,46 +14,46 @@ serial_port = None
 serial_lock = threading.Lock()
 
 def serial_read_thread(pub_serial_rx):
-    global serial_port
+    global serial_port, serial_lock, SERIAL_PACKET_SIZE
     rospy.loginfo("Serial read thread started.")
-    read_buffer = bytearray()
 
-    while not rospy.is_shutdown() and serial_port and serial_port.is_open:
+    if not serial_port or not serial_port.is_open:
+        rospy.logerr("Serial port is not initialized or not open. Exiting thread.")
+        return
+
+    if serial_port.timeout is None:
+        rospy.logwarn("Serial port timeout is not set! readline() could block indefinitely")
+
+    while not rospy.is_shutdown():
+        line_bytes = None
         try:
             with serial_lock:
-                bytes_waiting = serial_port.in_waiting
-                if bytes_waiting > 0:
-                    data = serial_port.read(bytes_waiting)
-                    if data:
-                        read_buffer.extend(data)
-                        # rospy.logdebug(f"Read {len(data)} bytes, buffer size: {len(read_buffer)}")
+                line_bytes = serial_port.readline()
 
-            while len(read_buffer) >= SERIAL_PACKET_SIZE:
-                packet = read_buffer[:SERIAL_PACKET_SIZE]
-                del read_buffer[:SERIAL_PACKET_SIZE]
+            if line_bytes:
+                payload_bytes = line_bytes.rstrip('\n')
+                actual_length = len(payload_bytes)
 
-                rospy.logdebug(f"Received packet ({len(packet)} bytes): {packet.hex()}")
+                if actual_length == SERIAL_PACKET_SIZE:
+                    rospy.logdebug(f"Received packet with expected length {actual_length} bytes.")
+                else:
+                    rospy.logwarn(f"Received packet with unexpected length: {actual_length} bytes "
+                        f"(expected {SERIAL_PACKET_SIZE}). Data (hex): {payload_bytes.hex()}")
 
                 msg = ByteMultiArray()
-                try:
-                    format_string = f'{SERIAL_PACKET_SIZE}b'
-                    signed_values_tuple = struct.unpack(format_string, packet)                   
-                    msg.data = signed_values_tuple
-                except struct.error as e:
-                    rospy.logerr(f"Failed to unpack serial data for ROS msg: {e}. Packet size: {len(packet)}")
-
+                msg.data = list(payload_bytes)
                 pub_serial_rx.publish(msg)
-                rospy.loginfo(f"Published {len(packet)} bytes to /pico/serial_rx")
-
+                rospy.loginfo(f"Published {actual_length} bytes to /pico/serial_rx")
         except serial.SerialException as e:
-            rospy.logerr(f"Serial read error: {e}")
+            rospy.logerr(f"Serial read error: {e}. Closing port and exiting thread.")
+            if serial_port and serial_port.is_open:
+                with serial_lock:
+                    if serial_port.is_open:
+                        serial_port.close()
             break
         except Exception as e:
-            rospy.logerr(f"Error in serial read thread: {e}")
-            break
-
-        rospy.sleep(0.01)
-
+            rospy.logerr(f"Unexpected error in serial read thread: {e}")
+            rospy.sleep(1.0)
     rospy.loginfo("Serial read thread finished.")
 
 def serial_tx_callback(msg):
