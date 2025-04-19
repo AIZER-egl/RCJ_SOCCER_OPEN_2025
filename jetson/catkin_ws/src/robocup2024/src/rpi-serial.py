@@ -76,7 +76,15 @@ def serial_tx_callback(msg):
 
     if serial_port and serial_port.is_open:
         try:
-            data_to_send = bytes(msg.data)
+            unsigned_byte_list = []
+            for signed_val in msg.data:
+                if -128 <= signed_val <= 255:
+                    unsigned_byte_list.append(signed_val & 0xff)
+                else:
+                    rospy.logwarn(f"Valor inesperado {signed_val} encontrado en msg.data. Usando 0 en su lugar.")
+                    unsigned_byte_list.append(0)
+
+            data_to_send = bytes(unsigned_byte_list)
 
             if len(data_to_send) != (SERIAL_PACKET_SIZE + 1):
                  rospy.logwarn(f"Received data packet of unexpected size ({len(data_to_send)} bytes), expected {SERIAL_PACKET_SIZE + 1}. Sending anyway.")
