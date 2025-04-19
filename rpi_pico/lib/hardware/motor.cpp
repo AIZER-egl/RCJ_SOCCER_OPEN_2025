@@ -286,7 +286,6 @@ void Motor::move(const float rpm, const float direction, const float facing_targ
 	rotationPID.target = facing_target;
 	rotationPID.error = facing_target - facing_current;
 	PID::compute(rotationPID);
-	std::cout << facing_current << " " << rotationPID.output << std::endl;
 
 	setSpeedNW(NWSpeed + rotationPID.output);
 	setSpeedSW(SWSpeed + rotationPID.output);
