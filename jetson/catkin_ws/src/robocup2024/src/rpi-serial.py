@@ -7,7 +7,7 @@ import sys
 import threading
 from std_msgs.msg import ByteMultiArray
 
-SERIAL_PACKET_SIZE = 18
+SERIAL_PACKET_SIZE = 37
 SERIAL_TIMEOUT = 0.1
 
 serial_port = None
