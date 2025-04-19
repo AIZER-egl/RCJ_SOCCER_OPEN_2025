@@ -71,7 +71,7 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
 }
 
 unsigned long long millis() {
-    auto currentTimePoint = std::chrono:steady_clock::now();
+    auto currentTimePoint = std::chrono::steady_clock::now();
     auto durationSinceEpoch = currentTimePoint.time_since_epoch();
     auto millisSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(durationSinceEpoch);
     return static_cast<unsigned long long>(millisSinceEpoch.count());
