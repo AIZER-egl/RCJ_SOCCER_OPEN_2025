@@ -8,7 +8,7 @@
 
 Chassis::Chassis() {}
 
-
+/*
 void Chassis::moveS(int rpm) {
     RPI_Bitmask::setBitmaskValue(std::abs(rpm), static_cast<int>(RPI_Bitmask::MOTOR_ADDRESS::S_SPEED));
     RPI_Bitmask::setBitmaskValue(rpm > 0, static_cast<int>(RPI_Bitmask::MOTOR_ADDRESS::S_DIR));
@@ -140,3 +140,4 @@ void Chassis::stop() {
 float Chassis::map(float x, float in_min, float in_max, float out_min, float out_max) {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
+*/

@@ -9,6 +9,10 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(OpenCV REQUIRED)
 
+# Require C++17 standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES robocup2024
@@ -41,12 +45,12 @@ add_executable(omnicamera
 target_link_libraries(omnicamera ${catkin_LIBRARIES})
 target_link_libraries(omnicamera ${OpenCV_LIBS})
 
-add_executable(strategy
-  src/strategy.cpp
-  lib/rpi-bitmask.cpp
-  lib/chassis.cpp
-  lib/angle.cpp
-  lib/pid.cpp
+add_executable(pico_data_processor
+        src/pico_data_processor.cpp
+        lib/chassis.cpp
+        lib/angle.cpp
+        lib/pid.cpp
+        lib/serializer.cpp
 )
-target_link_libraries(strategy ${catkin_LIBRARIES})
-target_link_libraries(strategy ${OpenCV_LIBS})
+target_link_libraries(pico_data_processor ${catkin_LIBRARIES})
+target_link_libraries(pico_data_processor ${OpenCV_LIBS})

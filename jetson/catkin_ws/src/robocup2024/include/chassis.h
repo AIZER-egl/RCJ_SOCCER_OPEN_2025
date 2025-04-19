@@ -1,14 +1,9 @@
-//
-// Created by kali on 4/1/24.
-//
-
 #ifndef ROBOCUP2024_CHASSIS_H
 #define ROBOCUP2024_CHASSIS_H
 
 #include <cmath>
 #include "pid.h"
 #include "angle.h"
-#include "rpi-bitmask.h"
 
 #define PI 3.1415926
 
