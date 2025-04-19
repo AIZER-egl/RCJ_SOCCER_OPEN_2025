@@ -69,16 +69,16 @@ def serial_tx_callback(msg):
 
     if serial_port and serial_port.is_open:
         try:
+            data_to_send = bytes(msg.data)
 
-            unsigned_values = [(val + 256) % 256 for val in msg.data]
-            data_to_send = bytearray(unsigned_values)
-
-            if len(data_to_send) != SERIAL_PACKET_SIZE and len(data_to_send) != 1:
-                 rospy.logwarn(f"Received data packet of unexpected size ({len(data_to_send)} bytes), expected {SERIAL_PACKET_SIZE} or 1. Sending anyway.")
+            if len(data_to_send) != (SERIAL_PACKET_SIZE + 1):
+                 rospy.logwarn(f"Received data packet of unexpected size ({len(data_to_send)} bytes), expected {SERIAL_PACKET_SIZE + 1}. Sending anyway.")
 
             with serial_lock:
                 bytes_written = serial_port.write(data_to_send)
                 rospy.loginfo(f"Wrote {bytes_written} bytes to serial port: {data_to_send.hex()} (hex)")
+                serial_port.flush()
+                rospy.loginfo(f"Bytes sent and buffer flushed")
 
         except serial.SerialException as e:
             rospy.logerr(f"Serial write error: {e}")
