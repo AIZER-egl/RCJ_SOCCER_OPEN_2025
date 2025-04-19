@@ -59,6 +59,7 @@ int main () {
 
 	unsigned long long last_kicker_time = millis();
 	unsigned long long last_motor_time = millis();
+	unsigned long long last_led_time = millis();
 	bool state = true;
 
 	BinarySerializationData data{};
@@ -116,6 +117,12 @@ int main () {
 			} else {
 				message.push_back(byte);
 			}
+		}
+
+		if (millis() - last_led_time >= 500) {
+			digitalWrite(BUILTIN_LED, state);
+			state = !state;
+			last_led_time = millis();
 		}
 
 		if (millis() - last_kicker_time >= 25) {
