@@ -1,7 +1,5 @@
 #include "serializer.h"
 
-#include <optional>
-
 std::vector<uint8_t> Serializer::serialize(const BinarySerializationData &data) {
 	const auto *dataPtr = reinterpret_cast<const uint8_t *>(&data);
 	return std::vector<uint8_t>(dataPtr, dataPtr + BINARY_SERIALIZATION_DATA_SIZE);

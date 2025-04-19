@@ -38,14 +38,16 @@ void sendData(BinarySerializationData& data) {
 	std::vector<uint8_t> bytes = Serializer::serialize(data);
 
 	if (!bytes.empty()) {
-		fwrite(
+		// For whatever reason, the PICO is transforming the \n to a \r\n
+		// Since pico is reliably (yet unknown) sending a \r the jetson will just accept this behaviour
+		bytes.push_back('\n');
+		size_t bytes_written = fwrite(
 			bytes.data(),
-			1,
+			sizeof(uint8_t),
 			bytes.size(),
 			stdout
 		);
 
-		putchar('\n');
 		fflush(stdout);
 	}
 }
@@ -115,6 +117,8 @@ int main () {
 				}
 
 				sendData(data);
+
+				message.clear();
 			} else {
 				message.push_back(byte);
 			}
