@@ -31,7 +31,7 @@ def serial_read_thread(pub_serial_rx):
                 line_bytes = serial_port.readline()
 
             if line_bytes:
-                payload_bytes = line_bytes.rstrip('\n')
+                payload_bytes = line_bytes.rstrip(b'\n')
                 actual_length = len(payload_bytes)
 
                 if actual_length == SERIAL_PACKET_SIZE:
