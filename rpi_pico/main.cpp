@@ -112,9 +112,9 @@ int main () {
 					data.robot_facing = receivedData.value().robot_facing;
 					data.robot_stop = receivedData.value().robot_stop;
 					data.kicker_active = receivedData.value().kicker_active;
-
-					sendData(data);
 				}
+
+				sendData(data);
 			} else {
 				message.push_back(byte);
 			}
