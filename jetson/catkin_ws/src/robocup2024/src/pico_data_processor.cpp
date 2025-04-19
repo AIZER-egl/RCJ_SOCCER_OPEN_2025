@@ -31,7 +31,7 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
     BinarySerializationData received_data = *received_data_opt;
 
     ROS_INFO("Deserialized Data: Yaw=%d, Kicker=%d, LDR=%d",
-     received_data.compass_yaw, received_data.kicker_active, received_data.ldr_value);
+        received_data.compass_yaw, received_data.kicker_active, received_data.ldr_value);
 
     data.motor_se_speed = received_data_opt -> motor_se_speed;
     data.motor_sw_speed = received_data_opt -> motor_sw_speed;
@@ -71,7 +71,7 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
 }
 
 unsigned long long millis() {
-    auto currentTimePoint = std::chronop:steady_clock::now();
+    auto currentTimePoint = std::chrono:steady_clock::now();
     auto durationSinceEpoch = currentTimePoint.time_since_epoch();
     auto millisSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(durationSinceEpoch);
     return static_cast<unsigned long long>(millisSinceEpoch.count());
@@ -113,8 +113,6 @@ int main (int argc, char **argv) {
     }
 
     ROS_INFO("Ready to process incoming messages.");
-
-    ros::spin();
 
     return 0;
 }
