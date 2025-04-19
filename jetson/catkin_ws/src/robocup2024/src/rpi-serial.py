@@ -31,20 +31,21 @@ def serial_read_thread(pub_serial_rx):
                 line_bytes = serial_port.readline()
 
             if line_bytes:
-                payload_bytes = line_bytes.rstrip(b'\r\n')
-                actual_length = len(payload_bytes)
-
-                if actual_length == SERIAL_PACKET_SIZE:
-                    rospy.logdebug(f"Received packet with expected length {actual_length} bytes.")
-                else:
-                    rospy.logwarn(f"Received packet with unexpected length: {actual_length} bytes "
-                        f"(expected {SERIAL_PACKET_SIZE}). Data (hex): {payload_bytes.hex()}"
-                        f"\nRaw message {len(payload_bytes)} bytes.")
-
-                msg = ByteMultiArray()
-                msg.data = list(payload_bytes)
-                pub_serial_rx.publish(msg)
-                rospy.loginfo(f"Published {actual_length} bytes to /pico/serial_rx")
+                rospy.loginfo(f"Received package with length: {line_bytes} bytes\n{line_bytes.hex()}")
+                # payload_bytes = line_bytes.rstrip(b'\r\n')
+                # actual_length = len(payload_bytes)
+                #
+                # if actual_length == SERIAL_PACKET_SIZE:
+                #     rospy.logdebug(f"Received packet with expected length {actual_length} bytes.")
+                # else:
+                #     rospy.logwarn(f"Received packet with unexpected length: {actual_length} bytes "
+                #         f"(expected {SERIAL_PACKET_SIZE}). Data (hex): {payload_bytes.hex()}"
+                #         f"\nRaw message {len(payload_bytes)} bytes.")
+                #
+                # msg = ByteMultiArray()
+                # msg.data = list(payload_bytes)
+                # pub_serial_rx.publish(msg)
+                # rospy.loginfo(f"Published {actual_length} bytes to /pico/serial_rx")
         except serial.SerialException as e:
             rospy.logerr(f"Serial read error: {e}. Closing port and exiting thread.")
             if serial_port and serial_port.is_open:
