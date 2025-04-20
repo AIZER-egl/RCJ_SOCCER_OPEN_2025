@@ -272,7 +272,7 @@ void Motor::move(const float rpm, const float direction, const float facing_targ
 	PID::compute(rotationPID);
 
 	setSpeedNW(NWSpeed + rotationPID.output);
-	setSpeedSW(SWSpeed + rotationPID.output);
-	setSpeedSE(SESpeed - rotationPID.output);
+	setSpeedSW(SWSpeed - rotationPID.output);
+	setSpeedSE(SESpeed + rotationPID.output);
 	setSpeedNE(NESpeed - rotationPID.output);
 }

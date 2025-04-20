@@ -97,6 +97,9 @@ int main (int argc, char **argv) {
             data.kicker_active = true;
             previous_time = millis();
         }
+		data.robot_direction = 0;
+		data.robot_speed = 40;
+		data.robot_facing = 0;
 
         ros::spinOnce();
         loop_rate.sleep();
