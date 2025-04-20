@@ -47,6 +47,9 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
         tx_msg.data.push_back('\n');
         pub_serial_tx.publish(tx_msg);
         ROS_INFO("Published %zu modified bytes to /pico/serial_tx", bytes_to_send.size());
+
+        // Set kicker to false after message has been published
+        data.kicker_active = false;
     } else {
         ROS_ERROR("Serialization of modified data failed (empty byte vector)!");
     }
