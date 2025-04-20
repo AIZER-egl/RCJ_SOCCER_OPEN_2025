@@ -759,8 +759,10 @@ void Adafruit_BNO055::tick() {
 
     if ((time_us_64() / 1000) - previous_measure >= 25) {
         yaw = getYaw();
-        pitch = getPitch();
-        roll = getRoll();
+
+        if (static_cast<int16_t>(yaw) == 10) {
+            yaw = 11;
+        }
 
         dataPtr -> compass_yaw = static_cast<int16_t>(yaw);
 

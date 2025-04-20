@@ -81,22 +81,6 @@ void Motor::tick() {
 		motorNE.getRPM();
 		motorNW.getRPM();
 
-		dataPtr -> motor_se_speed = motorSE.speed;
-		dataPtr -> motor_se_direction = motorSE.direction;
-		dataPtr -> motor_se_rpm = static_cast<float>(motorSE.rpm);
-
-		dataPtr -> motor_sw_speed = motorSW.speed;
-		dataPtr -> motor_sw_direction = motorSW.direction;
-		dataPtr -> motor_sw_rpm = static_cast<float>(motorSW.rpm);
-
-		dataPtr -> motor_ne_speed = motorNE.speed;
-		dataPtr -> motor_ne_direction = motorNE.direction;
-		dataPtr -> motor_ne_rpm = static_cast<float>(motorNE.rpm);
-
-		dataPtr -> motor_nw_speed = motorNW.speed;
-		dataPtr -> motor_nw_direction = motorNW.direction;
-		dataPtr -> motor_nw_rpm = static_cast<float>(motorNW.rpm);
-
 		previousTick = millis();
 	}
 }

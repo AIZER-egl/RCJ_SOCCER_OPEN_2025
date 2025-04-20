@@ -64,18 +64,6 @@ int main () {
 	bool state = true;
 
 	BinarySerializationData data{};
-	data.motor_se_speed = 0;
-	data.motor_sw_speed = 0;
-	data.motor_ne_speed = 0;
-	data.motor_nw_speed = 0;
-	data.motor_se_rpm = 0;
-	data.motor_sw_rpm = 0;
-	data.motor_ne_rpm = 0;
-	data.motor_nw_rpm = 0;
-	data.motor_se_direction = 1;
-	data.motor_sw_direction = 1;
-	data.motor_ne_direction = 1;
-	data.motor_nw_direction = 1;
 	data.compass_yaw = 0;
 	data.robot_direction = 0;
     data.robot_speed = 0;
