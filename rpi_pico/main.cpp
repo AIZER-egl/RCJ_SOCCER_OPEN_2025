@@ -133,8 +133,8 @@ int main () {
 				motor.stop();
 			} else {
 				motor.move(
-					data.robot_direction,
 					data.robot_speed,
+					data.robot_direction,
 					data.robot_facing,
 					data.compass_yaw
 					);
