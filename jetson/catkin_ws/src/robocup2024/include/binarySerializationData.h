@@ -7,21 +7,6 @@
 #pragma pack(push, 1)
 
 struct BinarySerializationData {
-	uint8_t motor_se_speed;
-	uint8_t motor_sw_speed;
-	uint8_t motor_ne_speed;
-	uint8_t motor_nw_speed;
-
-	float motor_se_rpm;
-	float motor_sw_rpm;
-	float motor_ne_rpm;
-	float motor_nw_rpm;
-
-	int8_t motor_se_direction;
-	int8_t motor_sw_direction;
-	int8_t motor_ne_direction;
-	int8_t motor_nw_direction;
-
 	int16_t compass_yaw;
 
 	int16_t robot_direction;

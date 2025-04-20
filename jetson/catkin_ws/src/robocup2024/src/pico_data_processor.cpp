@@ -33,21 +33,6 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
     ROS_INFO("Deserialized Data: Yaw=%d, Kicker=%d, LDR=%d",
         received_data.compass_yaw, received_data.kicker_active, received_data.ldr_value);
 
-    data.motor_se_speed = received_data_opt -> motor_se_speed;
-    data.motor_sw_speed = received_data_opt -> motor_sw_speed;
-    data.motor_ne_speed = received_data_opt -> motor_ne_speed;
-    data.motor_nw_speed = received_data_opt -> motor_nw_speed;
-
-    data.motor_se_rpm = received_data_opt -> motor_se_rpm;
-    data.motor_sw_rpm = received_data_opt -> motor_sw_rpm;
-    data.motor_ne_rpm = received_data_opt -> motor_ne_rpm;
-    data.motor_nw_rpm = received_data_opt -> motor_nw_rpm;
-
-    data.motor_se_direction = received_data_opt -> motor_se_direction;
-    data.motor_sw_direction = received_data_opt -> motor_sw_direction;
-    data.motor_ne_direction = received_data_opt -> motor_ne_direction;
-    data.motor_nw_direction = received_data_opt -> motor_nw_direction;
-
     data.compass_yaw = received_data_opt -> compass_yaw;
 
     data.ldr_value = received_data_opt -> ldr_value;
