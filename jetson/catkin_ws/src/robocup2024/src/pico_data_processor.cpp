@@ -10,6 +10,7 @@
 #include "serializer.h"
 
 ros::Publisher pub_serial_tx;
+BinarySerializationData data;
 
 void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
     ROS_INFO("Received %zu bytes on /pico/serial_rx", msg->data.size());
@@ -22,36 +23,43 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
         return;
     }
 
+    // Values that are being updated are handled by the PICO
+    //    -> They include information of hardware is doing
+    // Values not updated here are handled by the jetson
+    //    -> They include information about what the hardware should do
     BinarySerializationData received_data = *received_data_opt;
+
     ROS_INFO("Deserialized Data: Yaw=%d, Kicker=%d, LDR=%d",
-         received_data.compass_yaw, received_data.kicker_active, received_data.ldr_value);
+        received_data.compass_yaw, received_data.kicker_active, received_data.ldr_value);
 
-    BinarySerializationData data_to_send = received_data;
+    data.compass_yaw = received_data_opt -> compass_yaw;
 
-    data_to_send.motor_se_speed = 0;
-    data_to_send.motor_sw_speed = 0;
-    data_to_send.motor_ne_speed = 0;
-    data_to_send.motor_nw_speed = 0;
+    data.ldr_value = received_data_opt -> ldr_value;
 
-    ROS_INFO("Modified Data: Setting motor speeds to 0 for TX.");
+    ROS_INFO("Local data pack values: Yaw=%d, Kicker=%d, LDR=%d",
+        data.compass_yaw, data.kicker_active, data.ldr_value);
 
-    std::vector<int8_t> bytes_to_send = Serializer::serialize(data_to_send);
+    std::vector<int8_t> bytes_to_send = Serializer::serialize(data);
 
     if (!bytes_to_send.empty()) {
         std_msgs::ByteMultiArray tx_msg;
         tx_msg.data = bytes_to_send;
+        tx_msg.data.push_back('\n');
         pub_serial_tx.publish(tx_msg);
         ROS_INFO("Published %zu modified bytes to /pico/serial_tx", bytes_to_send.size());
 
-        ROS_INFO("Sending newline prompt to Pico...");
-        std_msgs::ByteMultiArray newline_msg;
-        newline_msg.data.push_back('\n');
-        pub_serial_tx.publish(newline_msg);
-        ROS_INFO("Published newline prompt to /pico/serial_tx");
+        // Set kicker to false after message has been published
+        data.kicker_active = false;
     } else {
         ROS_ERROR("Serialization of modified data failed (empty byte vector)!");
     }
+}
 
+unsigned long long millis() {
+    auto currentTimePoint = std::chrono::steady_clock::now();
+    auto durationSinceEpoch = currentTimePoint.time_since_epoch();
+    auto millisSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(durationSinceEpoch);
+    return static_cast<unsigned long long>(millisSinceEpoch.count());
 }
 
 int main (int argc, char **argv) {
@@ -71,21 +79,29 @@ int main (int argc, char **argv) {
     if (!init_bytes.empty()) {
         std_msgs::ByteMultiArray init_tx_msg;
         init_tx_msg.data = init_bytes;
+        init_tx_msg.data.push_back('\n');
         pub_serial_tx.publish(init_tx_msg);
         ROS_INFO("Published initial message (%zu bytes) to /pico/serial_tx", init_bytes.size());
-
-        ROS_INFO("Sending newline prompt to Pico...");
-        std_msgs::ByteMultiArray newline_msg;
-        newline_msg.data.push_back('\n'); // Add the newline character (byte 0x0a)
-        pub_serial_tx.publish(newline_msg);
-        ROS_INFO("Published newline prompt to /pico/serial_tx");
-} else {
+    } else {
         ROS_ERROR("Serialization of initial empty message failed!");
     }
 
-    ROS_INFO("Ready to process incoming messages.");
+    unsigned long long previous_time = millis();
+    ros::Rate loop_rate(15);
 
-    ros::spin();
+    ROS_INFO("Ready to process incoming messages."); // Mover esto antes del bucle
+
+    while (ros::ok()) {
+        if (millis() - previous_time >= 10000) { // 10 segundos
+            ROS_INFO("Updating BinarySerializationData variable to activate kicker");
+            data.kicker_active = true;
+            previous_time = millis();
+        }
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+    ROS_INFO("Ready to process incoming messages.");
 
     return 0;
 }
