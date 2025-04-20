@@ -29,15 +29,15 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
     //    -> They include information about what the hardware should do
     BinarySerializationData received_data = *received_data_opt;
 
-    ROS_INFO("Deserialized Data: Yaw=%d, Kicker=%d, LDR=%d",
-        received_data.compass_yaw, received_data.kicker_active, received_data.ldr_value);
+    ROS_INFO("Deserialized Data: Robot Dir=%d, Robot Speed=%d Yaw=%d, Kicker=%d,
+        received_data.robot_direction, received_data.robot_speed, received_data.compass_yaw, received_data.kicker_active);
 
     data.compass_yaw = received_data_opt -> compass_yaw;
 
     data.ldr_value = received_data_opt -> ldr_value;
 
-    ROS_INFO("Local data pack values: Yaw=%d, Kicker=%d, LDR=%d",
-        data.compass_yaw, data.kicker_active, data.ldr_value);
+    ROS_INFO("Local data pack values: Robot Dir=%d, Robot Speed=%d Yaw=%d, Kicker=%d",
+        data.robot_direction, data.robot_speed, data.compass_yaw, data.kicker_active);
 
     std::vector<int8_t> bytes_to_send = Serializer::serialize(data);
 
