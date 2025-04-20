@@ -11,7 +11,6 @@
 
 ros::Publisher pub_serial_tx;
 BinarySerializationData data;
-bool expect_new_kicker_active_value = false;
 
 void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
     ROS_INFO("Received %zu bytes on /pico/serial_rx", msg->data.size());
@@ -37,10 +36,8 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
 
     data.ldr_value = received_data_opt -> ldr_value;
 
-    if (expect_new_kicker_active_value) {
-        data.kicker_active = received_data_opt -> kicker_active;
-        expect_new_kicker_active_value = false;
-    }
+    ROS_INFO("Local data pack values: Yaw=%d, Kicker=%d, LDR=%d",
+        data.compass_yaw, data.kicker_active, data.ldr_value);
 
     std::vector<int8_t> bytes_to_send = Serializer::serialize(data);
 
@@ -95,7 +92,6 @@ int main (int argc, char **argv) {
         if (millis() - previous_time >= 10000) { // 10 segundos
             ROS_INFO("Updating BinarySerializationData variable to activate kicker");
             data.kicker_active = true;
-            expect_new_kicker_active_value = true;
             previous_time = millis();
         }
 
