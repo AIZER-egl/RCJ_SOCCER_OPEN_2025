@@ -115,14 +115,14 @@ int main (int argc, char **argv) {
         cv::cuda::GpuMat frame_gpu;
         frame_gpu.upload(frame_cpu);
 
-		preprocessing::resize(frame_gpu, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-		preprocessing::contrast(frame_gpu, 1.2, 2.3);
+		    preprocessing::resize(frame_gpu, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+		    preprocessing::contrast(frame_gpu, 1.2, 2.3);
         preprocessing::gamma_correction(frame_gpu, 1.9);
         preprocessing::brightness(frame_gpu, 1.4);
         preprocessing::saturation(frame_gpu, 2);
 
-		cv::Mat frame_final_cpu;
-		frame_gpu.download(frame_final_cpu);
+    		cv::Mat frame_final_cpu;
+		    frame_gpu.download(frame_final_cpu);
 
         if (record_video_flag && video_writer.isOpened()) {
             video_writer.write(frame_final_cpu);
