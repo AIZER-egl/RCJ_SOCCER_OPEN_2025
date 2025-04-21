@@ -35,7 +35,7 @@ int main (int argc, char **argv) {
     #endif
 
     std::string output_filename;
-    bool record_video_flag;
+    bool record_video_flag = false;
     int recording_fps;
     #ifdef RECORD_VIDEO
         record_video_flag = true;
@@ -47,7 +47,7 @@ int main (int argc, char **argv) {
     #endif
 
     Gstreamer gstreamer;
-    gstreamer.set_sensor_id(0);
+    gstreamer.set_sensor_id(1);
     gstreamer.set_min_exposure_timerange(320000);
     gstreamer.set_max_exposure_timerange(320000);
     gstreamer.set_framerate(14);
@@ -104,6 +104,11 @@ int main (int argc, char **argv) {
     }
 
     cap.release();
+
+    if (record_video_flag && video_writer.isOpened()) {
+        video_writer.release();
+        ROS_INFO("Video writer released. Recording saved to %s", output_filename.c_str());
+    }
 
     #ifdef SHOW_IMAGE
         cv::destroyAllWindows();
