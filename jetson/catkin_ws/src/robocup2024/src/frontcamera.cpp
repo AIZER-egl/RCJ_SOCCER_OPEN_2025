@@ -51,8 +51,8 @@ int main (int argc, char **argv) {
     gstreamer.set_min_exposure_timerange(320000);
     gstreamer.set_max_exposure_timerange(320000);
     gstreamer.set_framerate(14);
-    gstreamer.set_width(2160);
-    gstreamer.set_height(2160);
+    gstreamer.set_width(1280);
+    gstreamer.set_height(1280);
 
     ROS_INFO("Using command %s", gstreamer.get_command().c_str());
 
@@ -95,7 +95,7 @@ int main (int argc, char **argv) {
 
         #ifdef SHOW_IMAGE
             cv::imshow("Front-Camera", frame);
-            if (cv::waitKey(10) == KEY_ESC) {
+            if (cv::waitKey(1) == KEY_ESC) {
                 break;
             }
         #endif
