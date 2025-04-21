@@ -103,7 +103,7 @@ int main (int argc, char **argv) {
         cv::Mat frame;
         cap >> frame;
 
-	preprocessing::resize(frame, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+	    preprocessing::resize(frame, DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
         if (record_video_flag && video_writer.isOpened()) {
             video_writer.write(frame);
