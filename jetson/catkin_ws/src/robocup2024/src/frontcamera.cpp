@@ -40,7 +40,7 @@ int main (int argc, char **argv) {
     #ifdef RECORD_VIDEO
         record_video_flag = true;
         recording_fps = 14;
-        output_filename = "/home/aizer/Documents/RCJ_SOCCER_OPEN_2025/jetson/catkin_ws/src/robocup2024/out/frontcamera_out.mp4"
+        output_filename = "/home/aizer/Documents/RCJ_SOCCER_OPEN_2025/jetson/catkin_ws/src/robocup2024/out/frontcamera_out.mp4";
         ROS_INFO("Video recording ENABLED via compile-time define. FPS: %d, Output file: %s", recording_fps, output_filename.c_str());
     #else
         ROS_INFO("Video recording DISABLED via compile-time define.");
