@@ -25,8 +25,6 @@ namespace preprocessing {
 
     [[maybe_unused]] void color_space_conversion(cv::cuda::GpuMat &image, int code);
 
-    [[maybe_unused]] void noise_reduction(cv::cuda::GpuMat &image);
-
     [[maybe_unused]] void threshold(cv::cuda::GpuMat &image, int threshold_value, int max_value, int threshold_type);
 
     [[maybe_unused]] void blur(cv::cuda::GpuMat &image, int kernel_size);

@@ -1,10 +1,10 @@
 #include "preprocessing.h"
 
 [[maybe_unused]] void preprocessing::saturation(cv::cuda::GpuMat &image, float alpha) {
-    cv::cuda::GpuMat hsv_gpu;
-    cv::cuda::cvtColor(image, hsv, cv::COLOR_BGR2HSV);
+    	cv::cuda::GpuMat hsv_gpu;
+    	cv::cuda::cvtColor(image, hsv_gpu, cv::COLOR_BGR2HSV);
 
-    std::vector<cv::cuda::GpuMat> channels_gpu;
+    	std::vector<cv::cuda::GpuMat> channels_gpu;
 	cv::cuda::split(hsv_gpu, channels_gpu);
 
 	channels_gpu[1].convertTo(channels_gpu[1], channels_gpu[1].type(), alpha);
@@ -83,12 +83,6 @@
 
 [[maybe_unused]] void preprocessing::color_space_conversion(cv::cuda::GpuMat &image, int code) {
     cv::cuda::cvtColor(image, image, code);
-}
-
-[[maybe_unused]] void preprocessing::noise_reduction(cv::cuda::GpuMat &image) {
-	cv::cuda::GpuMat dst;
-	cv::cuda::fastNlMeansDenoisingColored(image, dst, 10, 10, 7, 21);
-	image = dst;
 }
 
 [[maybe_unused]] void preprocessing::threshold(cv::cuda::GpuMat &image, int threshold_value, int max_value, int threshold_type) {
