@@ -81,6 +81,13 @@ int main (int argc, char **argv) {
         return 1;
     }
 
+	if (cv::cuda::getCudaEnabledDeviceCount() == 0) {
+		ROS_FATAL("No Cuda Devices compatible with OpenCV were found");
+		ros::shutdown();
+		return 1;
+	} else {
+		ROS_INFO("Cuda Devices compatible with OpenCV were found, %d devices", cv::cuda::getCudaEnabledDeviceCount());
+	}
 
     cv::VideoWriter video_writer;
     cv::Size frame_size(DISPLAY_WIDTH, DISPLAY_HEIGHT);
@@ -100,17 +107,24 @@ int main (int argc, char **argv) {
     }
 
     for (unsigned long frame_id = 0;ros::ok();frame_id++) {
-        cv::Mat frame;
-        cap >> frame;
+    	cv::Mat frame_cpu;
+    	cap >> frame_cpu;
+    	if (frame_cpu.empty()) continue;
 
-	    preprocessing::resize(frame, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+    	cv::cuda::GpuMat frame_gpu;
+    	frame_gpu.upload(frame_cpu);
+
+	    preprocessing::resize(frame_gpu, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+
+    	cv::Mat frame_final_cpu;
+    	frame_gpu.download(frame_final_cpu);
 
         if (record_video_flag && video_writer.isOpened()) {
-            video_writer.write(frame);
+            video_writer.write(frame_final_cpu);
         }
 
         #ifdef SHOW_IMAGE
-            cv::imshow("Front-Camera", frame);
+            cv::imshow("Front-Camera", frame_final_cpu);
             if (cv::waitKey(1) == KEY_ESC) {
                 break;
             }
