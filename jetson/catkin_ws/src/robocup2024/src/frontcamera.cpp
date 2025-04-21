@@ -1,5 +1,9 @@
 #include <cmath>
 #include <string>
+#include <chrono>
+#include <ctime>
+#include <string>
+#include <sstream>
 #include <ros/ros.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <std_msgs/Bool.h>
@@ -11,13 +15,25 @@
 #include "gstreamer.h"
 
 #define KEY_ESC 27
-#define WIDTH 1080
-#define HEIGHT 1080
+#define WIDTH 1536
+#define HEIGHT 946
 #define PI 3.1415926
 #define EULER 2.71828
 
 #define SHOW_IMAGE
 #define RECORD_VIDEO
+
+#define DISPLAY_HEIGHT 473
+#define DISPLAY_WIDTH 768
+
+std::string getCurrentDateTimeString() {
+    auto now = std::chrono::system_clock::now();
+    auto now_c = std::chrono::system_clock::to_time_t(now);
+    struct tm *parts = std::localtime(&now_c);
+    char buffer[80];
+    strftime(buffer, sizeof(buffer), "%Y%m%d_%H%M%S", parts);
+    return std::string(buffer);
+}
 
 int main (int argc, char **argv) {
 
@@ -40,7 +56,10 @@ int main (int argc, char **argv) {
     #ifdef RECORD_VIDEO
         record_video_flag = true;
         recording_fps = 14;
-        output_filename = "/home/aizer/Documents/RCJ_SOCCER_OPEN_2025/jetson/catkin_ws/src/robocup2024/out/frontcamera_out.mp4";
+        output_filename = "/home/aizer/Documents/RCJ_SOCCER_OPEN_2025/jetson/catkin_ws/src/robocup2024/out/frontcamera_out_";
+        output_filename += getCurrentDateTimeString();
+        output_filename += ".mp4";
+
         ROS_INFO("Video recording ENABLED via compile-time define. FPS: %d, Output file: %s", recording_fps, output_filename.c_str());
     #else
         ROS_INFO("Video recording DISABLED via compile-time define.");
@@ -48,11 +67,9 @@ int main (int argc, char **argv) {
 
     Gstreamer gstreamer;
     gstreamer.set_sensor_id(1);
-    gstreamer.set_min_exposure_timerange(320000);
-    gstreamer.set_max_exposure_timerange(320000);
     gstreamer.set_framerate(14);
-    gstreamer.set_width(1280);
-    gstreamer.set_height(1280);
+    gstreamer.set_width(WIDTH);
+    gstreamer.set_height(HEIGHT);
 
     ROS_INFO("Using command %s", gstreamer.get_command().c_str());
 
@@ -66,7 +83,7 @@ int main (int argc, char **argv) {
 
 
     cv::VideoWriter video_writer;
-    cv::Size frame_size(WIDTH, HEIGHT);
+    cv::Size frame_size(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
     if (record_video_flag) {
         int codec = cv::VideoWriter::fourcc('M', 'P', '4', 'V');
@@ -86,8 +103,7 @@ int main (int argc, char **argv) {
         cv::Mat frame;
         cap >> frame;
 
-        preprocessing::resize(frame, WIDTH, HEIGHT);
-
+	preprocessing::resize(frame, DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
         if (record_video_flag && video_writer.isOpened()) {
             video_writer.write(frame);
