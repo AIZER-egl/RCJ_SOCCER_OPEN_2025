@@ -116,8 +116,7 @@ int main (int argc, char **argv) {
         frame_gpu.upload(frame_cpu);
 
 	    preprocessing::resize(frame_gpu, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-        preprocessing::resize(frame_gpu, WIDTH, HEIGHT);
-        preprocessing::contrast(frame_gpu, 1.2, 2.3);
+	    preprocessing::contrast(frame_gpu, 1.2, 2.3);
         preprocessing::gamma_correction(frame_gpu, 1.9);
         preprocessing::brightness(frame_gpu, 1.4);
         preprocessing::saturation(frame_gpu, 2);
