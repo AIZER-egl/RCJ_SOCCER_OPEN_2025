@@ -9,6 +9,7 @@
 #include <std_msgs/Bool.h>
 
 #include <opencv4/opencv2/opencv.hpp>
+#include <opencv4/opencv2/core/cuda.hpp>
 
 #include "preprocessing.h"
 #include "blob_detection.h"
@@ -81,9 +82,16 @@ int main (int argc, char **argv) {
         return 1;
     }
 
+    if (cv::cuda::getCudaEnabledDeviceCount() == 0) {
+		ROS_FATAL("No Cuda Devices compatible with OpenCV were found");
+		ros::shutdown();
+		return 1;
+    } else {
+    	ROS_INFO("Cuda Devices compatible with OpenCV were found, %d devices", cv::cuda::getCudaEnabledDeviceCount());
+    }
 
     cv::VideoWriter video_writer;
-    cv::Size frame_size(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+	cv::Size frame_size(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
     if (record_video_flag) {
         int codec = cv::VideoWriter::fourcc('M', 'P', '4', 'V');
@@ -100,22 +108,29 @@ int main (int argc, char **argv) {
     }
 
     for (unsigned long frame_id = 0;ros::ok();frame_id++) {
-        cv::Mat frame;
-        cap >> frame;
+        cv::Mat frame_cpu;
+        cap >> frame_cpu;
+        if (frame_cpu.empty()) continue;
 
-	    preprocessing::resize(frame, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-        preprocessing::resize(frame, WIDTH, HEIGHT);
-        preprocessing::contrast(frame, 1.2, 2.3);
-        preprocessing::gamma_correction(frame, 1.9);
-        preprocessing::brightness(frame, 1.4);
-        preprocessing::saturation(frame, 2);
+        cv::cuda::GpuMat frame_gpu;
+        frame_gpu.upload(frame_cpu);
+
+	    preprocessing::resize(frame_gpu, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+        preprocessing::resize(frame_gpu, WIDTH, HEIGHT);
+        preprocessing::contrast(frame_gpu, 1.2, 2.3);
+        preprocessing::gamma_correction(frame_gpu, 1.9);
+        preprocessing::brightness(frame_gpu, 1.4);
+        preprocessing::saturation(frame_gpu, 2);
+
+		cv::Mat frame_final_cpu;
+		frame_gpu.download(frame_final_cpu);
 
         if (record_video_flag && video_writer.isOpened()) {
-            video_writer.write(frame);
+            video_writer.write(frame_final_cpu);
         }
 
         #ifdef SHOW_IMAGE
-            cv::imshow("Omni-Camera", frame);
+            cv::imshow("Omni-Camera", frame_final_cpu);
             if (cv::waitKey(1) == KEY_ESC) {
                 break;
             }
@@ -124,7 +139,7 @@ int main (int argc, char **argv) {
         ros::spinOnce();
     }
 
-    cap.release();
+	cap.release();
 
     if (record_video_flag && video_writer.isOpened()) {
         video_writer.release();
