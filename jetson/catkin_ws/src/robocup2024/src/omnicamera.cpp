@@ -103,8 +103,7 @@ int main (int argc, char **argv) {
         cv::Mat frame;
         cap >> frame;
 
-	    preprocessing::resize(frame, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-        preprocessing::resize(frame, WIDTH, HEIGHT);
+	preprocessing::resize(frame, DISPLAY_WIDTH, DISPLAY_HEIGHT);
         preprocessing::contrast(frame, 1.2, 2.3);
         preprocessing::gamma_correction(frame, 1.9);
         preprocessing::brightness(frame, 1.4);
