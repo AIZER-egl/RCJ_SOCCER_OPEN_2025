@@ -40,6 +40,7 @@ add_executable(omnicamera
   src/omnicamera.cpp
   lib/blob_detection.cpp
   lib/preprocessing.cpp
+  lib/gstreamer.cpp
   )
 
 target_link_libraries(omnicamera ${catkin_LIBRARIES})
