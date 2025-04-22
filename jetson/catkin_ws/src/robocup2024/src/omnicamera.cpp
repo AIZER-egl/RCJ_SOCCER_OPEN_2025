@@ -128,7 +128,7 @@ int main (int argc, char **argv) {
 		frame_gpu.download(frame_final_cpu);
 
     	std::vector<BlobDetection::Blob> blobs = ballDetection.detect(frame_final_cpu);
-    	ballDetection.plot_blobs(frame_final_cpu, blobs, cv::Scalar(0, 57, 255))
+    	ballDetection.plot_blobs(frame_final_cpu, blobs, cv::Scalar(0, 57, 255));
 
         if (record_video_flag && video_writer.isOpened()) {
             video_writer.write(frame_final_cpu);
