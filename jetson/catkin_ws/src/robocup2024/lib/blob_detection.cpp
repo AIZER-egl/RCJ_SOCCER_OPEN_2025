@@ -14,38 +14,36 @@ BlobDetection::BlobDetection() = default;
     this->max_area = maxArea;
 }
 
-[[maybe_unused]] std::vector<BlobDetection::Blob> BlobDetection::detect(cv::Mat &frame) {
-    cv::Mat mask;
-    cv::inRange(frame, lower_bound, upper_bound, mask);
+[[maybe_unused]] std::vector<BlobDetection::Blob> BlobDetection::detect(cv::cuda::GpuMat &frame) {
+	cv::cuda::GpuMat gpu_processed_frame, gpu_mask;
+	cv::Mat mask_cpu;
 
-    std::vector<std::vector<cv::Point>> contours;
-    std::vector<cv::Vec4i> hierarchy;
+	cv::cuda::cvtColor(frame, gpu_processed_frame, cv::COLOR_BGR2HSV);
+	cv::cuda::inRange(gpu_processed_frame, lower_bound, upper_bound, gpu_mask);
+	gpu_mask.download(mask_cpu);
 
-    cv::findContours(mask, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+	std::vector<std::vector<cv::Point>> contours;
+	std::vector<cv::Vec4i> hierarchy;
 
-    std::sort(contours.begin(), contours.end(), [](const std::vector<cv::Point> &a, const std::vector<cv::Point> &b) {
-        return cv::contourArea(a) > cv::contourArea(b);
-    });
+	// Detect blobs using GPU is extremely difficult since no native cv::cura blob-detection-functions are available
+	cv::findContours(mask_cpu, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
-    std::vector<Blob> blobs;
+	std::sort(contours.begin(), contours.end(), [](const std::vector<cv::Point> &a, const std::vector<cv::Point> &b) {
+		return cv::contourArea(a) > cv::contourArea(b);
+	});
 
-    for (const auto &contour : contours) {
-        double area = cv::contourArea(contour);
+	std::vector<Blob> blobs;
 
-        if (area > min_area && area < max_area) {
-            cv::Rect rect = cv::boundingRect(contour);
-            Blob blob = {
-                    rect.x,
-                    rect.y,
-                    rect.width,
-                    rect.height
-            };
+	for (const auto &contour : contours) {
+		double area = cv::contourArea(contour);
 
-            blobs.push_back(blob);
-        }
-    }
+		if (area >= min_area && area <= max_area) {
+			cv::Rect rect = cv::boundingRect(contour);
+			blobs.push_back({rect.x, rect.y, rect.width, rect.height});
+		}
+	}
 
-    return blobs;
+	return blobs;
 }
 
 [[maybe_unused]] void BlobDetection::plot_blobs(cv::Mat &frame, std::vector<BlobDetection::Blob> &blobs, cv::Scalar color) {

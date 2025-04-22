@@ -2,7 +2,6 @@
 #include <string>
 #include <chrono>
 #include <ctime>
-#include <string>
 #include <sstream>
 #include <ros/ros.h>
 #include <std_msgs/Float32MultiArray.h>
