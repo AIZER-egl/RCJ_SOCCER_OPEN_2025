@@ -51,7 +51,7 @@ BlobDetection::BlobDetection() = default;
         cv::rectangle(
             frame,
             cv::Point(blob.x, blob.y),
-            cv::Point(blob.x + blob.w, blob.y + blob.h),
+            cv::Point(blob.x + blob.width, blob.y + blob.height),
             color,
             2
         );
