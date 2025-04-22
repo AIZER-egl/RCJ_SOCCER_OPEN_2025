@@ -124,7 +124,7 @@ int main (int argc, char **argv) {
         preprocessing::brightness(frame_gpu, 1.4);
         preprocessing::saturation(frame_gpu, 2);
 
-    	std::vector<BlobDetection::Blob> blobs = ballDetection.detect(frame);
+    	std::vector<BlobDetection::Blob> blobs = ballDetection.detect(frame_gpu);
 
     	cv::Mat frame_final_cpu;
 		frame_gpu.download(frame_final_cpu);
