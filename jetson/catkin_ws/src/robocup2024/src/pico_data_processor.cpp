@@ -1,5 +1,6 @@
 #include "ros/ros.h"
 #include "std_msgs/ByteMultiArray.h"
+#include "std_msgs/Float32MultiArray.h"
 #include "ros/duration.h"
 #include <vector>
 #include <optional>
@@ -9,8 +10,13 @@
 #include "binarySerializationData.h"
 #include "serializer.h"
 
+#define INVALID_VALUE 999
+
 ros::Publisher pub_serial_tx;
 BinarySerializationData data;
+float omni_angle;
+float front_angle;
+float front_distance;
 
 void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
     ROS_INFO("Received %zu bytes on /pico/serial_rx", msg->data.size());
@@ -55,6 +61,30 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
     }
 }
 
+void omnicamera_callback (const std_msgs::Float32MultiArray::ConstPtr& msg) {
+	ROS_INFO("Received omnicamera data (size: %zu)", msg -> data.size());
+
+	if (msg -> data.size() >= 1) {
+		omni_angle = msg -> data[0];
+		ROS_INFO("OmniCam Data: Angle=%.2f", omni_angle);
+	} else {
+		ROS_WARN("Received insufficient data on omnicamera_topic (size %zu, expected >= 1)", msg -> data.size());
+	}
+}
+
+void frontcamera_callback (const std_msgs::Float32MultiArray::ConstPtr& msg) {
+	ROS_INFO("Received frontcamera data (size: %zu)", msg -> data.size());
+
+	if (msg -> data.size() >= 2) {
+		front_angle = msg -> data[0];
+		front_distance = msg -> data[1];
+
+		ROS_INFO("FrontCam Data: Angle=%.2f, Distance=%.2f", front_angle, front_distance);
+	} else {
+		ROS_WARN("Received insufficient data on frontcamera_topic (size %zu, expected >= 2)", msg -> data.size());
+	}
+}
+
 unsigned long long millis() {
     auto currentTimePoint = std::chrono::steady_clock::now();
     auto durationSinceEpoch = currentTimePoint.time_since_epoch();
@@ -92,14 +122,20 @@ int main (int argc, char **argv) {
     ROS_INFO("Ready to process incoming messages."); // Mover esto antes del bucle
 
     while (ros::ok()) {
-        if (millis() - previous_time >= 10000) { // 10 segundos
+        if (millis() - previous_time >= 10000) {
             ROS_INFO("Updating BinarySerializationData variable to activate kicker");
             data.kicker_active = true;
             previous_time = millis();
         }
-		data.robot_direction = 0;
-		data.robot_speed = 40;
-		data.robot_facing = 0;
+
+		if (front_angle != INVALID_VALUE) {
+        	data.robot_stop = false;
+        	data.robot_direction = front_angle;
+        	data.robot_speed = 20;
+        	data.robot_facing = 0;
+        } else {
+			data.robot_stop = true;
+        }
 
         ros::spinOnce();
         loop_rate.sleep();

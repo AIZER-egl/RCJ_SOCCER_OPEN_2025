@@ -27,6 +27,8 @@
 #define DISPLAY_HEIGHT 473
 #define DISPLAY_WIDTH 768
 
+#define INVALID_VALUE 999
+
 std::string getCurrentDateTimeString() {
 	auto now = std::chrono::system_clock::now();
 	auto now_c = std::chrono::system_clock::to_time_t(now);
@@ -151,8 +153,8 @@ int main (int argc, char **argv) {
 		auto ball = BlobDetection::biggest_blob(ballBlobs);
 		
 		if (!ball) {
-			ball_angle = -1;
-			ball_distance = -1;
+			ball_angle = INVALID_VALUE;
+			ball_distance = INVALID_VALUE;
 		} else {
 			const float ball_cx = ball.value().x + ball.value().width / 2;
 			const float ball_cy = ball.value().y + ball.value().height / 2;
@@ -171,6 +173,14 @@ int main (int argc, char **argv) {
 			}
 		}
 
+		std_msgs::Float32MultiArray msg;
+		msg.data.clear();
+
+		msg.data.push_back(ball_angle);
+		msg.data.push_back(ball_distance);
+
+		pub.publish(msg);
+
 		#ifdef RECORD_VIDEO
 			if (record_video_flag && video_writer.isOpened()) {
 				video_writer.write(frame_cpu);
@@ -187,7 +197,10 @@ int main (int argc, char **argv) {
 		ros::spinOnce();
 		long long endTimestamp = getMillis();
 		ms_count += endTimestamp - startTimestamp;
-		ROS_INFO("Frame processed in %d milliseconds. Avg: %f.\nBall\nangle: %f degrees\ndistance: %f cm", static_cast<int>(endTimestamp - startTimestamp), ms_count * 1.0 / (frame_id) * 1.0, ball_angle, ball_distance);
+		ROS_INFO("Frame processed in %d milliseconds. Avg: %f.\nBall\nangle: %f degrees\ndistance: %f cm\nPublished: [angle=%f, distance=%f]",
+			static_cast<int>(endTimestamp - startTimestamp), ms_count * 1.0 / (frame_id) * 1.0,
+			ball_angle, ball_distance,
+			msg.data[0], msg.data[1]);
 	}
 
 	cap.release();

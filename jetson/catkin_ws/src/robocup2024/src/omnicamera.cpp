@@ -30,6 +30,8 @@
 #define ROBOT_ORIGIN_X 351
 #define ROBOT_ORIGIN_Y 210
 
+#define INVALID_VALUE 999
+
 void on_mouse (int event, int x, int y, int flags, void* userdata) {
 	(void)userdata;
 	(void)flags;
@@ -177,7 +179,7 @@ int main (int argc, char **argv) {
 		auto ball = BlobDetection::biggest_blob(ballBlobs);
 
 		if (!ball) {
-			ball_angle = -1;
+			ball_angle = INVALID_VALUE;
 		} else {
 			const float ball_cx = ball.value().x + ball.value().width / 2;
 			const float ball_cy = ball.value().y + ball.value().height / 2;
@@ -187,9 +189,18 @@ int main (int argc, char **argv) {
 			ball_angle = get_angle(view_ball_cx, view_ball_cy);				
 		}
 
-		if (record_video_flag && video_writer.isOpened()) {
-			video_writer.write(frame_cpu);
-		}
+		std_msgs::Float32MultiArray msg;
+		msg.data.clear();
+
+		msg.data.push_back(ball_angle);
+
+		pub.publish(msg);
+
+		#ifdef RECORD_VIDEO
+			if (record_video_flag && video_writer.isOpened()) {
+				video_writer.write(frame_cpu);
+			}
+		#endif
 
 		#ifdef SHOW_IMAGE
 			const std::string window_name = "Omni-Camera";
