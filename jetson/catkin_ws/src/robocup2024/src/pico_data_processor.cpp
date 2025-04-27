@@ -131,7 +131,7 @@ int main (int argc, char **argv) {
 	if (front_angle != INVALID_VALUE) {
         	data.robot_stop = false;
         	data.robot_direction = front_angle;
-        	data.robot_speed = 30;
+        	data.robot_speed = 37;
         	data.robot_facing = 0;
         } else {
 		data.robot_direction = 0;
