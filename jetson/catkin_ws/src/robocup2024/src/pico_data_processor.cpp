@@ -35,13 +35,14 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
     //    -> They include information about what the hardware should do
     BinarySerializationData received_data = *received_data_opt;
 
-    ROS_INFO("Deserialized Data: Robot Dir=%d, Robot Speed=%d Yaw=%d, Kicker=%d",
-        received_data.robot_direction, received_data.robot_speed, received_data.compass_yaw, received_data.kicker_active);
-
     data.compass_yaw = received_data_opt -> compass_yaw;
 
-    ROS_INFO("Local data pack values: Robot Dir=%d, Robot Speed=%d Yaw=%d, Kicker=%d",
-        data.robot_direction, data.robot_speed, data.compass_yaw, data.kicker_active);
+    ROS_INFO("Local data pack values:\nRobot Dir=%d, Robot Speed=%d Yaw=%d, Kicker=%d\nNW:%d - NE: %d - SE: %d - SW: %d\nLDR 0: %d - 1: %d - 2: %d - 3: %d\nLDR 4: %d - 5: %d - 6: %d - 7: %d",
+        data.robot_direction, data.robot_speed, data.compass_yaw, data.kicker_active,
+		data.motor_nw_rps, data.motor_ne_rps, data.motor_se_rps, data.motor_sw_rps,
+		data.ldr_0_value, data.ldr_1_value, data.ldr_2_value, data.ldr_3_value,
+		data.ldr_4_value, data.ldr_5_value, data.ldr_6_value, data.ldr_7_value
+	);
 
     std::vector<int8_t> bytes_to_send = Serializer::serialize(data);
 
@@ -50,9 +51,6 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
         tx_msg.data = bytes_to_send;
         tx_msg.data.push_back('\n');
         pub_serial_tx.publish(tx_msg);
-        ROS_INFO("Published %zu modified bytes to /pico/serial_tx", bytes_to_send.size());
-
-        // Set kicker to false after message has been published
         data.kicker_active = false;
     } else {
         ROS_ERROR("Serialization of modified data failed (empty byte vector)!");
@@ -60,24 +58,17 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
 }
 
 void omnicamera_callback (const std_msgs::Float32MultiArray::ConstPtr& msg) {
-	ROS_INFO("Received omnicamera data (size: %zu)", msg -> data.size());
-
 	if (msg -> data.size() >= 1) {
 		omni_angle = msg -> data[0];
-		ROS_INFO("OmniCam Data: Angle=%.2f", omni_angle);
 	} else {
 		ROS_WARN("Received insufficient data on omnicamera_topic (size %zu, expected >= 1)", msg -> data.size());
 	}
 }
 
 void frontcamera_callback (const std_msgs::Float32MultiArray::ConstPtr& msg) {
-	ROS_INFO("Received frontcamera data (size: %zu)", msg -> data.size());
-
 	if (msg -> data.size() >= 2) {
 		front_angle = msg -> data[0];
 		front_distance = msg -> data[1];
-
-		ROS_INFO("FrontCam Data: Angle=%.2f, Distance=%.2f", front_angle, front_distance);
 	} else {
 		ROS_WARN("Received insufficient data on frontcamera_topic (size %zu, expected >= 2)", msg -> data.size());
 	}
@@ -111,7 +102,6 @@ int main (int argc, char **argv) {
         init_tx_msg.data = init_bytes;
         init_tx_msg.data.push_back('\n');
         pub_serial_tx.publish(init_tx_msg);
-        ROS_INFO("Published initial message (%zu bytes) to /pico/serial_tx", init_bytes.size());
     } else {
         ROS_ERROR("Serialization of initial empty message failed!");
     }
@@ -119,30 +109,28 @@ int main (int argc, char **argv) {
     unsigned long long previous_time = millis();
     ros::Rate loop_rate(15);
 
-    ROS_INFO("Ready to process incoming messages."); // Mover esto antes del bucle
+    ROS_INFO("Ready to process incoming messages.");
 
     while (ros::ok()) {
         if (millis() - previous_time >= 10000) {
-            ROS_INFO("Updating BinarySerializationData variable to activate kicker");
             data.kicker_active = true;
             previous_time = millis();
         }
 
-	if (front_angle != INVALID_VALUE) {
-        	data.robot_stop = false;
-        	data.robot_direction = front_angle;
-        	data.robot_speed = 37;
+		if (front_angle != INVALID_VALUE) {
+			data.robot_stop = false;
+			data.robot_direction = front_angle;
+			data.robot_speed = 45;
         	data.robot_facing = 0;
-        } else {
-		data.robot_direction = 0;
-		data.robot_speed = 0;
-		data.robot_facing = 0;
-        }
+		} else {
+			data.robot_direction = 0;
+			data.robot_speed = 0;
+			data.robot_facing = 0;
+		}
 
-        ros::spinOnce();
-        loop_rate.sleep();
+       	ros::spinOnce();
+       	loop_rate.sleep();
     }
-    ROS_INFO("Ready to process incoming messages.");
 
     return 0;
 }
