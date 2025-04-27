@@ -14,9 +14,9 @@
 
 ros::Publisher pub_serial_tx;
 BinarySerializationData data;
-float omni_angle;
-float front_angle;
-float front_distance;
+float omni_angle = INVALID_VALUE;
+float front_angle = INVALID_VALUE;
+float front_distance = INVALID_VALUE;
 
 void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
     ROS_INFO("Received %zu bytes on /pico/serial_rx", msg->data.size());
@@ -39,8 +39,6 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
         received_data.robot_direction, received_data.robot_speed, received_data.compass_yaw, received_data.kicker_active);
 
     data.compass_yaw = received_data_opt -> compass_yaw;
-
-    data.ldr_value = received_data_opt -> ldr_value;
 
     ROS_INFO("Local data pack values: Robot Dir=%d, Robot Speed=%d Yaw=%d, Kicker=%d",
         data.robot_direction, data.robot_speed, data.compass_yaw, data.kicker_active);
@@ -100,6 +98,8 @@ int main (int argc, char **argv) {
 
     pub_serial_tx = nh.advertise<std_msgs::ByteMultiArray>("/pico/serial_tx", 10);
     ros::Subscriber sub_serial_rx = nh.subscribe("/pico/serial_rx", 10, serialRxCallback);
+    ros::Subscriber sub_frontcamera_topic = nh.subscribe("/omnicamera_topic", 10, omnicamera_callback);
+    ros::Subscriber sub_omnicamera_topic = nh.subscribe("/frontcamera_topic", 10, frontcamera_callback);
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
     ROS_INFO("Sending initial 'empty' message to Pico...");
@@ -128,13 +128,15 @@ int main (int argc, char **argv) {
             previous_time = millis();
         }
 
-		if (front_angle != INVALID_VALUE) {
+	if (front_angle != INVALID_VALUE) {
         	data.robot_stop = false;
         	data.robot_direction = front_angle;
-        	data.robot_speed = 20;
+        	data.robot_speed = 30;
         	data.robot_facing = 0;
         } else {
-			data.robot_stop = true;
+		data.robot_direction = 0;
+		data.robot_speed = 0;
+		data.robot_facing = 0;
         }
 
         ros::spinOnce();

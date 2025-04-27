@@ -16,7 +16,14 @@ struct BinarySerializationData {
 
 	bool kicker_active;
 
-	uint8_t ldr_value;
+	uint16_t ldr_0_value;
+	uint16_t ldr_1_value;
+	uint16_t ldr_2_value;
+	uint16_t ldr_3_value;
+	uint16_t ldr_4_value;
+	uint16_t ldr_5_value;
+	uint16_t ldr_6_value;
+	uint16_t ldr_7_value;
 
 	uint8_t setting_team_id;
 	uint8_t setting_attack_goal;

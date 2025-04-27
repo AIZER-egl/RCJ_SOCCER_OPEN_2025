@@ -21,7 +21,7 @@
 #define PI 3.1415926
 #define EULER 2.71828
 
-#define SHOW_IMAGE
+//#define SHOW_IMAGE
 //#define RECORD_VIDEO
 
 #define DISPLAY_HEIGHT 473
