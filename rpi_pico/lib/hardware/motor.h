@@ -10,15 +10,15 @@
 #include "../../pico-lib/gpio.h"
 #include "../software/binarySerializationData.h"
 
-#define MOTOR_SE_DIR 12
-#define MOTOR_SE_PWM 13
-#define MOTOR_SE_ENC_A 6
-#define MOTOR_SE_ENC_B 7
+#define MOTOR_NE_DIR 12
+#define MOTOR_NE_PWM 13
+#define MOTOR_NE_ENC_A 6
+#define MOTOR_NE_ENC_B 7
 
-#define MOTOR_NE_DIR 8
-#define MOTOR_NE_PWM 9
-#define MOTOR_NE_ENC_A 21
-#define MOTOR_NE_ENC_B 20
+#define MOTOR_SE_DIR 8
+#define MOTOR_SE_PWM 9
+#define MOTOR_SE_ENC_A 21
+#define MOTOR_SE_ENC_B 20
 
 #define MOTOR_SW_DIR 2
 #define MOTOR_SW_PWM 3
@@ -35,14 +35,14 @@
 #define MOTOR_NE 0b0010
 #define MOTOR_NW 0b0011
 
-#define TICKS_PER_REVOLUTION_ENCODER 48
+#define TICKS_PER_REVOLUTION_ENCODER 12
 #define GEAR_RATIO 9.68
 
 #define MAX_SPEED 255
 #define MIN_SPEED 25
 
-#define MAX_RPM 500
-#define MIN_RPM 0
+#define MAX_RPS 80
+#define MIN_RPS 0
 
 #define PI 3.141592
 
@@ -54,7 +54,7 @@ public:
 		uint8_t id{};
 		int8_t direction{};
 		uint16_t speed{};
-		double rpm{};
+		double rps{};
 
 		unsigned long previousPulsesA{};
 		unsigned long previousPulsesB{};
@@ -64,9 +64,9 @@ public:
 
 		static void callback (unsigned int gpio, unsigned long events);
 
-		void getRPM ();
+		void getRPS ();
 
-		PID::PidParameters rpmPID;
+		PID::PidParameters rpsPID;
 		int delay_ms = 20;
 		unsigned long lastIteration_ms = 0;
 		int previousOut{};
@@ -84,10 +84,10 @@ public:
 	void setSpeedNE (int16_t speed);
 	void setSpeedNW (int16_t speed);
 
-	void moveSE (int16_t rpm);
-	void moveSW (int16_t rpm);
-	void moveNE (int16_t rpm);
-	void moveNW (int16_t rpm);
+	void moveSE (int16_t rps);
+	void moveSW (int16_t rps);
+	void moveNE (int16_t rps);
+	void moveNW (int16_t rps);
 
 	void begin (BinarySerializationData& data);
 
@@ -95,7 +95,7 @@ public:
 
 	void tick ();
 
-	void move (float rpm, float direction, float facing_target, float facing_current);
+	void move (float rps, float direction, float facing_target, float facing_current);
 
 	void rotate (int16_t angle);
 private:

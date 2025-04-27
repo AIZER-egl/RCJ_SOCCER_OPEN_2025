@@ -754,15 +754,31 @@ bool Adafruit_BNO055::readLen(adafruit_bno055_reg_t reg, uint8_t *buffer,
     return i2c_read_blocking(_port, _address, buffer, len, false);
 }
 
+void Adafruit_BNO055::setYawOffset(float new_yaw_offset) {
+    yaw_offset = new_yaw_offset;
+}
+
+
 void Adafruit_BNO055::tick() {
     if (!dataPtr) return;
 
     if ((time_us_64() / 1000) - previous_measure >= 25) {
         yaw = getYaw();
 
+        yaw = yaw - yaw_offset;
+
+        if (yaw < 0) {
+            yaw += 360;
+        }
+        if (yaw > 360) {
+            yaw -= 360;
+        }
+
         if (static_cast<int16_t>(yaw) == 10) {
             yaw = 11;
         }
+
+        yaw = (yaw > 180) ? (yaw - 360) : yaw;
 
         dataPtr -> compass_yaw = static_cast<int16_t>(yaw);
 
@@ -773,6 +789,7 @@ void Adafruit_BNO055::tick() {
 float Adafruit_BNO055::getYaw() {
     float v = getVector(VECTOR_EULER)[0];
     v = (v > 180.0) ? (v - 360.0) : v;
+    raw_yaw = v;
     return v;
 }
 

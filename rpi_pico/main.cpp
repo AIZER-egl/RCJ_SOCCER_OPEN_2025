@@ -18,18 +18,19 @@
 #include "lib/hardware/kicker.h"
 #include "lib/hardware/motor.h"
 #include "lib/hardware/compass_classes.h"
+#include "lib/hardware/light_sensor.h"
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "EndlessLoop"
 #define SDA 4
 #define SCL 5
 #define ARDUINO_I2C 8
-#define START_BUTTON 21
+#define ACTION_BUTTON 28
 
-#define LDR 28
+#define ROBOT_ON true
+#define ROBOT_OFF false
 
 float yaw = 0;
-float yaw_offset = 0;
 bool disabled = false;
 std::vector<uint8_t> message = {};
 
@@ -56,29 +57,47 @@ int main () {
 
 	Motor motor;
 	Kicker kicker;
+	Light_Sensor light_sensor;
 	Adafruit_BNO055 bno;
 
 	unsigned long long last_kicker_time = millis();
 	unsigned long long last_motor_time = millis();
 	unsigned long long last_led_time = millis();
-	bool state = true;
+	unsigned long led_rate = 500;
+	bool previous_action_button_read = false;
+	bool action_button_read = false;
+	bool robot_state = false;
+	bool led_state = true;
 
 	BinarySerializationData data{};
 	data.compass_yaw = 0;
-	data.robot_direction = 0;
+	data.motor_se_rps = 0;
+    data.motor_sw_rps = 0;
+    data.motor_nw_rps = 0;
+    data.motor_ne_rps = 0;
+    data.robot_direction = 0;
     data.robot_speed = 0;
     data.robot_facing = 0;
     data.robot_stop = false;
 	data.kicker_active = false;
-	data.ldr_value = 255;
 	data.setting_team_id = 1;
 	data.setting_attack_goal = 1;
+	data.ldr_0_value = 0;
+	data.ldr_1_value = 0;
+	data.ldr_2_value = 0;
+	data.ldr_3_value = 0;
+	data.ldr_4_value = 0;
+	data.ldr_5_value = 0;
+	data.ldr_6_value = 0;
+	data.ldr_7_value = 0;
 
     bno.begin(I2C_PORT_0, 100 * 1000, SDA, SCL, data);
     motor.begin(data);
     kicker.begin(data);
+	light_sensor.begin();
 
 	pinMode(KICKER, OUTPUT);
+	pinMode(ACTION_BUTTON, INPUT);
 	pinMode(BUILTIN_LED, OUTPUT);
 	digitalWrite(BUILTIN_LED, HIGH);
 
@@ -86,9 +105,12 @@ int main () {
 	kicker.kick();
 
 	for (;;) {
+		bno.tick();
 		motor.tick();
 		kicker.tick();
-		bno.tick();
+		light_sensor.tick();
+
+		action_button_read = digitalRead(ACTION_BUTTON);
 
 		int received_char;
 		while ((received_char = getchar_timeout_us(0)) != PICO_ERROR_TIMEOUT) {
@@ -103,6 +125,15 @@ int main () {
 					data.kicker_active = receivedData.value().kicker_active;
 				}
 
+				data.ldr_0_value = light_sensor.ldr_0;
+				data.ldr_1_value = light_sensor.ldr_1;
+				data.ldr_2_value = light_sensor.ldr_2;
+				data.ldr_3_value = light_sensor.ldr_3;
+				data.ldr_4_value = light_sensor.ldr_4;
+				data.ldr_5_value = light_sensor.ldr_5;
+				data.ldr_6_value = light_sensor.ldr_6;
+				data.ldr_7_value = light_sensor.ldr_7;
+
 				sendData(data);
 
 				message.clear();
@@ -114,9 +145,21 @@ int main () {
 			}
 		}
 
-		if (millis() - last_led_time >= 500) {
-			digitalWrite(BUILTIN_LED, state);
-			state = !state;
+		if (action_button_read && !previous_action_button_read) {
+			if (robot_state == ROBOT_OFF) {
+				robot_state = ROBOT_ON;
+				led_rate = 100;
+				kicker.kick();
+				bno.setYawOffset(bno.raw_yaw);
+			} else {
+				led_rate = 500;
+				robot_state = ROBOT_OFF;
+			}
+		}
+
+		if (millis() - last_led_time >= led_rate) {
+			digitalWrite(BUILTIN_LED, led_state);
+			led_state = !led_state;
 			last_led_time = millis();
 		}
 
@@ -129,7 +172,8 @@ int main () {
 		}
 
 		if (millis() - last_motor_time >= 25) {
-			if (data.robot_stop) {
+
+			if (data.robot_stop || robot_state == ROBOT_OFF) {
 				motor.stop();
 			} else {
 				motor.move(
@@ -142,6 +186,8 @@ int main () {
 
 			last_motor_time = millis();
 		}
+
+		previous_action_button_read = action_button_read;
 	}
 }
 

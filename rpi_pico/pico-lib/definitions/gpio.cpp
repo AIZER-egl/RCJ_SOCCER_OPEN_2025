@@ -37,8 +37,7 @@ void digitalWrite(const uint8_t pin, const uint8_t value) {
     gpio_put(pin, value);
 }
 
-uint8_t digitalRead(const uint8_t pin) {
-    gpio_set_dir(pin, GPIO_IN);
+bool digitalRead(const uint8_t pin) {
     return gpio_get(pin);
 }
 

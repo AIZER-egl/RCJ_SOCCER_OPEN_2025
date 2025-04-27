@@ -29,7 +29,7 @@ void digitalWrite(uint8_t pin, uint8_t value);
 void analogWrite(uint8_t pin, uint8_t value);
 void toggleFor(unsigned long ms, uint8_t pin);
 void interrupts(const std::vector<uint8_t>& pins, gpio_irq_callback_t callback);
-uint8_t digitalRead(uint8_t pin);
+bool digitalRead(uint8_t pin);
 uint16_t analogRead(uint8_t pin);
 
 #endif

@@ -36,35 +36,35 @@ void Motor::begin (BinarySerializationData& data) {
 		}
 	);
 
-	motorSE.rpmPID.maxOutput = MAX_SPEED;
-	motorSE.rpmPID.maxError = 1000.0;
-	motorSE.rpmPID.errorThreshold = 3.0;
-	motorSE.rpmPID.kp = 0.1;
-	motorSE.rpmPID.ki = 0.0001;
-	motorSE.rpmPID.kd = 0.0;
+	motorSE.rpsPID.maxOutput = MAX_SPEED;
+	motorSE.rpsPID.maxError = 1000.0;
+	motorSE.rpsPID.errorThreshold = 3.0;
+	motorSE.rpsPID.kp = 0.1;
+	motorSE.rpsPID.ki = 0.0001;
+	motorSE.rpsPID.kd = 0.0;
 
-	motorSW.rpmPID.maxOutput = MAX_SPEED;
-	motorSW.rpmPID.maxError = 1000.0;
-	motorSW.rpmPID.errorThreshold = 3.0;
-	motorSW.rpmPID.kp = 0.1;
-	motorSW.rpmPID.ki = 0.0001;
-	motorSW.rpmPID.kd = 0.0;
+	motorSW.rpsPID.maxOutput = MAX_SPEED;
+	motorSW.rpsPID.maxError = 1000.0;
+	motorSW.rpsPID.errorThreshold = 3.0;
+	motorSW.rpsPID.kp = 0.1;
+	motorSW.rpsPID.ki = 0.0001;
+	motorSW.rpsPID.kd = 0.0;
 
-	motorNW.rpmPID.maxOutput = MAX_SPEED;
-	motorNW.rpmPID.maxError = 1000.0;
-	motorNW.rpmPID.errorThreshold = 3.0;
-	motorNW.rpmPID.kp = 0.1;
-	motorNW.rpmPID.ki = 0.0001;
-	motorNW.rpmPID.kd = 0.0;
+	motorNW.rpsPID.maxOutput = MAX_SPEED;
+	motorNW.rpsPID.maxError = 1000.0;
+	motorNW.rpsPID.errorThreshold = 3.0;
+	motorNW.rpsPID.kp = 0.1;
+	motorNW.rpsPID.ki = 0.0001;
+	motorNW.rpsPID.kd = 0.0;
 
-	motorNE.rpmPID.maxOutput = MAX_SPEED;
-	motorNE.rpmPID.maxError = 1000.0;
-	motorNE.rpmPID.errorThreshold = 3.0;
-	motorNE.rpmPID.kp = 0.1;
-	motorNE.rpmPID.ki = 0.0001;
-	motorNE.rpmPID.kd = 0.0;
+	motorNE.rpsPID.maxOutput = MAX_SPEED;
+	motorNE.rpsPID.maxError = 1000.0;
+	motorNE.rpsPID.errorThreshold = 3.0;
+	motorNE.rpsPID.kp = 0.1;
+	motorNE.rpsPID.ki = 0.0001;
+	motorNE.rpsPID.kd = 0.0;
 
-	rotationPID.maxOutput = MAX_RPM;
+	rotationPID.maxOutput = MAX_RPS;
 	rotationPID.maxError = 1000.0;
 	rotationPID.errorThreshold = 3.0;
 	rotationPID.kp = 0.25;
@@ -75,11 +75,16 @@ void Motor::begin (BinarySerializationData& data) {
 void Motor::tick() {
 	if (!dataPtr) return;
 
-	if (millis() - previousTick >= 20) {
-		motorSE.getRPM();
-		motorSW.getRPM();
-		motorNE.getRPM();
-		motorNW.getRPM();
+	if (millis() - previousTick >= 10) {
+		motorSE.getRPS();
+		motorSW.getRPS();
+		motorNE.getRPS();
+		motorNW.getRPS();
+
+		dataPtr -> motor_nw_rps = motorNW.rps;
+		dataPtr -> motor_ne_rps = motorNE.rps;
+		dataPtr -> motor_sw_rps = motorSW.rps;
+		dataPtr -> motor_se_rps = motorSE.rps;
 
 		previousTick = millis();
 	}
@@ -104,11 +109,12 @@ void Motor::setSpeedSW (int16_t speed) {
 }
 
 void Motor::setSpeedNE (int16_t speed) {
+	// TODO: Hardcoded 10 offset
 	speed = std::clamp(speed, static_cast<int16_t>(-MAX_SPEED), static_cast<int16_t>(MAX_SPEED));
 
-	analogWrite(MOTOR_NE_PWM, std::abs(speed));
+	analogWrite(MOTOR_NE_PWM, std::abs(speed) + 10);
 	digitalWrite(MOTOR_NE_DIR, speed > 0);
-	motorNE.speed = std::abs(speed);
+	motorNE.speed = std::abs(speed) + 10;
 	motorNE.direction = speed > 0 ? 1 : -1;
 }
 
@@ -131,7 +137,7 @@ void Motor::individualMotor::callback(const unsigned int gpio, unsigned long eve
 	}
 }
 
-void Motor::individualMotor::getRPM() {
+void Motor::individualMotor::getRPS() {
 	unsigned long pulses;
 	unsigned long long previous_pulses_timestamp;
 	switch (id) {
@@ -143,7 +149,7 @@ void Motor::individualMotor::getRPM() {
 	}
 
 	const double elapsed_us = (micros() - previous_pulses_timestamp);
-	rpm = (pulses * (SECOND * 60 * 1000)) / (GEAR_RATIO * TICKS_PER_REVOLUTION_ENCODER * elapsed_us);
+	rps = (pulses * (SECOND * 1000)) / (GEAR_RATIO * TICKS_PER_REVOLUTION_ENCODER * elapsed_us);
 
 	switch (id) {
 		case MOTOR_SE: pulses_SE = 0; previous_pulses_SE_timestamp = micros(); break;
@@ -157,10 +163,10 @@ void Motor::individualMotor::getRPM() {
 void Motor::stop() {
 	if (motorSE.speed == 0 && motorSW.speed == 0 && motorNE.speed == 0 && motorNW.speed == 0) return;
 
-	setSpeedSE(-MAX_SPEED * motorSE.speed / std::abs(motorSE.speed));
-	setSpeedSW(-MAX_SPEED * motorSW.speed / std::abs(motorSW.speed));
-	setSpeedNE(-MAX_SPEED * motorNE.speed / std::abs(motorNE.speed));
-	setSpeedNW(-MAX_SPEED * motorNW.speed / std::abs(motorNW.speed));
+	if (motorSE.speed != 0) setSpeedSE(-MAX_SPEED * motorSE.speed / std::abs(motorSE.speed));
+	if (motorSW.speed != 0) setSpeedSW(-MAX_SPEED * motorSW.speed / std::abs(motorSW.speed));
+	if (motorNE.speed != 0) setSpeedNE(-MAX_SPEED * motorNE.speed / std::abs(motorNE.speed));
+	if (motorNW.speed != 0) setSpeedNW(-MAX_SPEED * motorNW.speed / std::abs(motorNW.speed));
 
 	delay(50);
 
@@ -172,95 +178,95 @@ void Motor::stop() {
 	dataPtr->robot_stop = false;
 }
 
-void Motor::moveSE(const int16_t rpm) {
+void Motor::moveSE(const int16_t rps) {
 	if (micros() - motorSE.lastIteration_ms < motorSE.delay_ms) return;
 
-	motorSE.rpmPID.error = std::abs(rpm) - std::abs(motorSE.rpm);
-	motorSE.rpmPID.target = std::abs(rpm);
-	PID::compute(motorSE.rpmPID);
+	motorSE.rpsPID.error = std::abs(rps) - std::abs(motorSE.rps);
+	motorSE.rpsPID.target = std::abs(rps);
+	PID::compute(motorSE.rpsPID);
 
-	if (rpm > 0) {
+	if (rps > 0) {
 		if (motorSE.previousOut < 0) motorSE.previousOut *= -1;
-		motorSE.previousOut = motorSE.previousOut + motorSE.rpmPID.output;
+		motorSE.previousOut = motorSE.previousOut + motorSE.rpsPID.output;
 		motorSE.previousOut = std::clamp(motorSE.previousOut, MIN_SPEED, MAX_SPEED);
 	} else {
 		if (motorSE.previousOut > 0) motorSE.previousOut *= -1;
-		motorSE.previousOut = motorSE.previousOut - motorSE.rpmPID.output;
+		motorSE.previousOut = motorSE.previousOut - motorSE.rpsPID.output;
 		motorSE.previousOut = std::clamp(motorSE.previousOut, -MAX_SPEED, -MIN_SPEED);
 	}
 
 	setSpeedSE(motorSE.previousOut);
 }
 
-void Motor::moveSW(const int16_t rpm) {
+void Motor::moveSW(const int16_t rps) {
 	if (micros() - motorSW.lastIteration_ms < motorSW.delay_ms) return;
 
-	motorSW.rpmPID.error = std::abs(rpm) - std::abs(motorSW.rpm);
-	motorSW.rpmPID.target = std::abs(rpm);
-	PID::compute(motorSW.rpmPID);
+	motorSW.rpsPID.error = std::abs(rps) - std::abs(motorSW.rps);
+	motorSW.rpsPID.target = std::abs(rps);
+	PID::compute(motorSW.rpsPID);
 
-	if (rpm > 0) {
+	if (rps > 0) {
 		if (motorSW.previousOut < 0) motorSW.previousOut *= -1;
-		motorSW.previousOut = motorSW.previousOut + motorSW.rpmPID.output;
+		motorSW.previousOut = motorSW.previousOut + motorSW.rpsPID.output;
 		motorSW.previousOut = std::clamp(motorSW.previousOut, MIN_SPEED, MAX_SPEED);
 	} else {
 		if (motorSW.previousOut > 0) motorSW.previousOut *= -1;
-		motorSW.previousOut = motorSW.previousOut - motorSW.rpmPID.output;
+		motorSW.previousOut = motorSW.previousOut - motorSW.rpsPID.output;
 		motorSW.previousOut = std::clamp(motorSW.previousOut, -MAX_SPEED, -MIN_SPEED);
 	}
 
 	setSpeedSW(motorSW.previousOut);
 }
 
-void Motor::moveNE(const int16_t rpm) {
+void Motor::moveNE(const int16_t rps) {
 	if (micros() - motorNE.lastIteration_ms < motorNE.delay_ms) return;
 
-	motorNE.rpmPID.error = std::abs(rpm) - std::abs(motorNE.rpm);
-	motorNE.rpmPID.target = std::abs(rpm);
-	PID::compute(motorNE.rpmPID);
+	motorNE.rpsPID.error = std::abs(rps) - std::abs(motorNE.rps);
+	motorNE.rpsPID.target = std::abs(rps);
+	PID::compute(motorNE.rpsPID);
 
-	if (rpm > 0) {
+	if (rps > 0) {
 		if (motorNE.previousOut < 0) motorNE.previousOut *= -1;
-		motorNE.previousOut = motorNE.previousOut + motorNE.rpmPID.output;
+		motorNE.previousOut = motorNE.previousOut + motorNE.rpsPID.output;
 		motorNE.previousOut = std::clamp(motorNE.previousOut, MIN_SPEED, MAX_SPEED);
 	} else {
 		if (motorNE.previousOut > 0) motorNE.previousOut *= -1;
-		motorNE.previousOut = motorNE.previousOut - motorNE.rpmPID.output;
+		motorNE.previousOut = motorNE.previousOut - motorNE.rpsPID.output;
 		motorNE.previousOut = std::clamp(motorNE.previousOut, -MAX_SPEED, -MIN_SPEED);
 	}
 
 	setSpeedNE(motorNE.previousOut);
 }
 
-void Motor::moveNW(const int16_t rpm) {
+void Motor::moveNW(const int16_t rps) {
 	if (micros() - motorNW.lastIteration_ms < motorNW.delay_ms) return;
 
-	motorNW.rpmPID.error = std::abs(rpm) - std::abs(motorNW.rpm);
-	motorNW.rpmPID.target = std::abs(rpm);
-	PID::compute(motorNW.rpmPID);
+	motorNW.rpsPID.error = std::abs(rps) - std::abs(motorNW.rps);
+	motorNW.rpsPID.target = std::abs(rps);
+	PID::compute(motorNW.rpsPID);
 
-	if (rpm > 0) {
+	if (rps > 0) {
 		if (motorNW.previousOut < 0) motorNW.previousOut *= -1;
-		motorNW.previousOut = motorNW.previousOut + motorNW.rpmPID.output;
+		motorNW.previousOut = motorNW.previousOut + motorNW.rpsPID.output;
 		motorNW.previousOut = std::clamp(motorNW.previousOut, MIN_SPEED, MAX_SPEED);
 	} else {
 		if (motorNW.previousOut > 0) motorNW.previousOut *= -1;
-		motorNW.previousOut = motorNW.previousOut - motorNW.rpmPID.output;
+		motorNW.previousOut = motorNW.previousOut - motorNW.rpsPID.output;
 		motorNW.previousOut = std::clamp(motorNW.previousOut, -MAX_SPEED, -MIN_SPEED);
 	}
 
 	setSpeedNW(motorNW.previousOut);
 }
 
-void Motor::move(const float rpm, const float direction, const float facing_target, const float facing_current) {
-	double NWSpeed = rpm * cos((PI / 180) * (direction + 315));
-	double SWSpeed = rpm * cos((PI / 180) * (direction + 225));
-	double SESpeed = rpm * cos((PI / 180) * (direction + 135));
-	double NESpeed = rpm * cos((PI / 180) * (direction + 45));
+void Motor::move(const float rps, const float direction, const float facing_target, const float facing_current) {
+	double NWSpeed = rps * cos((PI / 180) * (direction + 350));
+	double SWSpeed = rps * cos((PI / 180) * (direction) + 190);
+	double SESpeed = rps * cos((PI / 180) * (direction) + 170);
+	double NESpeed = rps * cos((PI / 180) * (direction) + 10);
 
 	double values[] = { NWSpeed, SWSpeed, SESpeed, NESpeed };
 	const double max = *std::max_element(values, values + 4);
-	const double ratio = max != 0 ? rpm / max : 0;
+	const double ratio = max != 0 ? rps / max : 0;
 
 	NWSpeed *= ratio;
 	SWSpeed *= ratio;

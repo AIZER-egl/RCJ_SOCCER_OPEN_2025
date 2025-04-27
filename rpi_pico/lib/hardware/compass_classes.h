@@ -331,9 +331,12 @@ public:
     float getPitch ();
     float getRoll ();
 
+    void setYawOffset (float new_yaw_offset);
+
     float yaw{};
     float pitch{};
     float roll{};
+    float raw_yaw{};
 private:
     uint8_t read8(adafruit_bno055_reg_t);
     bool readLen(adafruit_bno055_reg_t, uint8_t *buffer, uint8_t len);
@@ -342,6 +345,8 @@ private:
     int32_t _sensorID;
     adafruit_bno055_opmode_t _mode;
     uint8_t _address;
+
+    float yaw_offset{};
 
     i2c_inst_t * _port{};
     BinarySerializationData* dataPtr;

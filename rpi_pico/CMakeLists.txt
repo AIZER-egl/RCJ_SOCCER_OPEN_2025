@@ -14,6 +14,7 @@ pico_sdk_init()
 
 add_executable(main
 		main.cpp
+		lib/hardware/light_sensor.cpp
 		lib/hardware/compass_classes.cpp
 		lib/hardware/motor.cpp
 		lib/hardware/kicker.cpp
