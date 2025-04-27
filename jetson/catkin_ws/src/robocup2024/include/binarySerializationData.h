@@ -9,10 +9,10 @@
 struct BinarySerializationData {
 	int16_t compass_yaw;
 
-	double motor_se_rps;
-	double motor_sw_rps;
-	double motor_ne_rps;
-	double motor_nw_rps;
+	float motor_se_rps;
+	float motor_sw_rps;
+	float motor_ne_rps;
+	float motor_nw_rps;
 
 	int16_t robot_direction;
 	int16_t robot_speed;
@@ -21,17 +21,8 @@ struct BinarySerializationData {
 
 	bool kicker_active;
 
-	uint16_t ldr_0_value;
-	uint16_t ldr_1_value;
-	uint16_t ldr_2_value;
-	uint16_t ldr_3_value;
-	uint16_t ldr_4_value;
-	uint16_t ldr_5_value;
-	uint16_t ldr_6_value;
-	uint16_t ldr_7_value;
-
-	uint8_t setting_team_id;
-	uint8_t setting_attack_goal;
+	uint8_t ldr_0_value;
+	uint8_t ldr_4_value;
 };
 
 #pragma pack(pop)
