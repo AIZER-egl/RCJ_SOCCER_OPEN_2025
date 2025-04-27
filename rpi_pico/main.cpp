@@ -71,25 +71,11 @@ int main () {
 
 	BinarySerializationData data{};
 	data.compass_yaw = 0;
-	data.motor_se_rps = 0;
-    data.motor_sw_rps = 0;
-    data.motor_nw_rps = 0;
-    data.motor_ne_rps = 0;
     data.robot_direction = 0;
     data.robot_speed = 0;
     data.robot_facing = 0;
     data.robot_stop = false;
 	data.kicker_active = false;
-	data.setting_team_id = 1;
-	data.setting_attack_goal = 1;
-	data.ldr_0_value = 0;
-	data.ldr_1_value = 0;
-	data.ldr_2_value = 0;
-	data.ldr_3_value = 0;
-	data.ldr_4_value = 0;
-	data.ldr_5_value = 0;
-	data.ldr_6_value = 0;
-	data.ldr_7_value = 0;
 
     bno.begin(I2C_PORT_0, 100 * 1000, SDA, SCL, data);
     motor.begin(data);
@@ -124,15 +110,6 @@ int main () {
 					data.robot_stop = receivedData.value().robot_stop;
 					data.kicker_active = receivedData.value().kicker_active;
 				}
-
-				data.ldr_0_value = light_sensor.ldr_0;
-				data.ldr_1_value = light_sensor.ldr_1;
-				data.ldr_2_value = light_sensor.ldr_2;
-				data.ldr_3_value = light_sensor.ldr_3;
-				data.ldr_4_value = light_sensor.ldr_4;
-				data.ldr_5_value = light_sensor.ldr_5;
-				data.ldr_6_value = light_sensor.ldr_6;
-				data.ldr_7_value = light_sensor.ldr_7;
 
 				sendData(data);
 

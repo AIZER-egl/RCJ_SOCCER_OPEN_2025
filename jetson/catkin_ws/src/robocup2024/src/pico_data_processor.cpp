@@ -37,10 +37,8 @@ void serialRxCallback(const std_msgs::ByteMultiArray::ConstPtr& msg) {
 
     data.compass_yaw = received_data_opt -> compass_yaw;
 
-    ROS_INFO("Local data pack values:\nRobot Dir=%d, Robot Speed=%d Yaw=%d, Kicker=%d\nNW:%f - NE: %f - SE: %f - SW: %f\nLDR 0: %d - 4: %d",
+    ROS_INFO("Local data pack values:\nRobot Dir=%d, Robot Speed=%d Yaw=%d, Kicker=%d",
         data.robot_direction, data.robot_speed, data.compass_yaw, data.kicker_active,
-		data.motor_nw_rps, data.motor_ne_rps, data.motor_se_rps, data.motor_sw_rps,
-		data.ldr_0_value, data.ldr_4_value
 	);
 
     std::vector<int8_t> bytes_to_send = Serializer::serialize(data);

@@ -8,7 +8,7 @@ import threading
 import logging # Importar el módulo logging
 from std_msgs.msg import ByteMultiArray
 
-SERIAL_PACKET_SIZE = 28
+SERIAL_PACKET_SIZE = 10
 SERIAL_TIMEOUT = 0.1
 
 serial_port = None

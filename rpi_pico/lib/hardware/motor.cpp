@@ -81,10 +81,10 @@ void Motor::tick() {
 		motorNE.getRPS();
 		motorNW.getRPS();
 
-		dataPtr -> motor_nw_rps = motorNW.rps;
-		dataPtr -> motor_ne_rps = motorNE.rps;
-		dataPtr -> motor_sw_rps = motorSW.rps;
-		dataPtr -> motor_se_rps = motorSE.rps;
+		// dataPtr -> motor_nw_rps = static_cast<float>(motorNW.rps);
+		// dataPtr -> motor_ne_rps = static_cast<float>(motorNE.rps);
+		// dataPtr -> motor_sw_rps = static_cast<float>(motorSW.rps);
+		// dataPtr -> motor_se_rps = static_cast<float>(motorSE.rps);
 
 		previousTick = millis();
 	}
