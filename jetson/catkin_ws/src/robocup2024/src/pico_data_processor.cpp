@@ -120,6 +120,7 @@ int main (int argc, char **argv) {
 			data.robot_direction = front_angle;
 			data.robot_speed = 115; // 11.5 RPS
 			data.robot_facing = 0;
+			data.robot_stop = false;
 		} else {
 			data.robot_stop = true;
 		}
