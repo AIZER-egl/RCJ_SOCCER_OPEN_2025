@@ -6,6 +6,7 @@
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 #include "hardware/gpio.h"
+#include "../software/binarySerializationData.h"
 
 #define MCP_SPI_PORT spi0
 #define MCP_SPI_SCK 18
@@ -16,7 +17,7 @@
 class Light_Sensor {
 public:
 	Light_Sensor();
-	void begin();
+	void begin(BinarySerializationData& data);
 	void tick();
 
 	uint16_t ldr_0{};
@@ -30,7 +31,9 @@ public:
 private:
 	uint8_t current_channel = 0;
 	uint16_t getValue(uint8_t channel);
+	BinarySerializationData* dataPtr;
 	double previous_read{};
+	double previos_data_update{};
 };
 
 #endif //LIGHT_SENSOR_H

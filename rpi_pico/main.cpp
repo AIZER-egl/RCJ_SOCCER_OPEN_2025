@@ -77,11 +77,13 @@ int main () {
     data.robot_facing = 0;
     data.robot_stop = false;
 	data.kicker_active = false;
+	data.ldr_channel = 5;
+	data.ldr_value = 100;
 
     bno.begin(I2C_PORT_0, 100 * 1000, SDA, SCL, data);
     motor.begin(data);
     kicker.begin(data);
-	light_sensor.begin();
+	light_sensor.begin(data);
 
 	pinMode(KICKER, OUTPUT);
 	pinMode(ACTION_BUTTON, INPUT);
@@ -109,14 +111,12 @@ int main () {
 					data.robot_facing = receivedData.value().robot_facing;
 					data.robot_stop = receivedData.value().robot_stop;
 					data.kicker_active = receivedData.value().kicker_active;
-
-					data.motor_ne_rps = static_cast<float>(motor.motorNE.getRPS_average());
-					data.motor_nw_rps = static_cast<float>(motor.motorNW.getRPS_average());
-					data.motor_se_rps = static_cast<float>(motor.motorSE.getRPS_average());
-					data.motor_sw_rps = static_cast<float>(motor.motorSW.getRPS_average());
 				}
 
 				sendData(data);
+
+				data.ldr_channel += 1;
+				if (data.ldr_channel > 7) data.ldr_channel = 0;
 
 				message.clear();
 			} else {
@@ -173,7 +173,7 @@ int main () {
 
 		if (millis() - last_motor_time >= 25) {
 			if (data.robot_stop || robot_state == ROBOT_OFF) {
-				// motor.stop();
+				motor.stop();
 			} else {
 				motor.move(
 					static_cast<float>(data.robot_speed) / 10,

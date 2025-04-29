@@ -82,9 +82,10 @@ void Motor::begin (BinarySerializationData& data) {
 	motorNE.rpsPID.ki = 36;
 	motorNE.rpsPID.kd = 1;
 
+	rotationPID.one_direction_only = false;
 	rotationPID.max_output = MAX_RPS;
 	rotationPID.error_threshold = 0.0;
-	rotationPID.kp = 0;
+	rotationPID.kp = 0.05;
 	rotationPID.ki = 0;
 	rotationPID.kd = 0;
 }

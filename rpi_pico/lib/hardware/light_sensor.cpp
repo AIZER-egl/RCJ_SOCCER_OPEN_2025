@@ -2,7 +2,9 @@
 
 Light_Sensor::Light_Sensor() {};
 
-void Light_Sensor::begin() {
+void Light_Sensor::begin(BinarySerializationData& data) {
+	dataPtr = &data;
+
 	spi_init(MCP_SPI_PORT, 1000 * 1000);
 	spi_set_format(MCP_SPI_PORT, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
@@ -40,7 +42,8 @@ uint16_t Light_Sensor::getValue(uint8_t channel) {
 }
 
 void Light_Sensor::tick() {
-	if ((time_us_64() / 1000) - previous_read >= 1) {
+	unsigned long long timestamp_ms = time_us_64() / 1000;
+	if (timestamp_ms - previous_read >= 1) {
 		uint16_t value = getValue(current_channel);
 		switch (current_channel) {
 			case 0: ldr_0 = value; break;
@@ -57,5 +60,21 @@ void Light_Sensor::tick() {
 		current_channel++;
 		if (current_channel > 7) current_channel = 0;
 		previous_read = time_us_64() / 1000;
+	}
+
+	if (timestamp_ms - previos_data_update >= 30) {
+		switch (dataPtr->ldr_channel) {
+			case 0:	dataPtr->ldr_value = static_cast<int16_t>(ldr_0); break;
+			case 1:	dataPtr->ldr_value = static_cast<int16_t>(ldr_1); break;
+			case 2:	dataPtr->ldr_value = static_cast<int16_t>(ldr_2); break;
+			case 3:	dataPtr->ldr_value = static_cast<int16_t>(ldr_3); break;
+			case 4:	dataPtr->ldr_value = static_cast<int16_t>(ldr_4); break;
+			case 5:	dataPtr->ldr_value = static_cast<int16_t>(ldr_5); break;
+			case 6:	dataPtr->ldr_value = static_cast<int16_t>(ldr_6); break;
+			case 7:	dataPtr->ldr_value = static_cast<int16_t>(ldr_7); break;
+			default: dataPtr->ldr_value = 0; break;
+		}
+
+		previos_data_update = time_us_64() / 1000;
 	}
 }
