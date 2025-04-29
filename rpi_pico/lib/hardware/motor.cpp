@@ -10,7 +10,19 @@ unsigned long long previous_pulses_SW_timestamp;
 unsigned long long previous_pulses_NE_timestamp;
 unsigned long long previous_pulses_NW_timestamp;
 
-Motor::Motor() : dataPtr(nullptr) {};
+Motor::Motor() : dataPtr(nullptr) {
+	motorSE.pwm_pin = MOTOR_SE_PWM;
+	motorSE.dir_pin = MOTOR_SE_DIR;
+
+	motorSW.pwm_pin = MOTOR_SW_PWM;
+	motorSW.dir_pin = MOTOR_SW_DIR;
+
+	motorNE.pwm_pin = MOTOR_NE_PWM;
+	motorNE.dir_pin = MOTOR_NE_DIR;
+
+	motorNW.pwm_pin = MOTOR_NW_PWM;
+	motorNW.dir_pin = MOTOR_NW_DIR;
+};
 
 void Motor::begin (BinarySerializationData& data) {
 	dataPtr = &data;
@@ -36,40 +48,45 @@ void Motor::begin (BinarySerializationData& data) {
 		}
 	);
 
-	motorSE.rpsPID.maxOutput = MAX_SPEED;
-	motorSE.rpsPID.maxError = 1000.0;
-	motorSE.rpsPID.errorThreshold = 3.0;
-	motorSE.rpsPID.kp = 0.1;
-	motorSE.rpsPID.ki = 0.0001;
-	motorSE.rpsPID.kd = 0.0;
+	motorSE.name = "SE";
+	motorSW.name = "SW";
+	motorNE.name = "NE";
+	motorNW.name = "NW";
 
-	motorSW.rpsPID.maxOutput = MAX_SPEED;
-	motorSW.rpsPID.maxError = 1000.0;
-	motorSW.rpsPID.errorThreshold = 3.0;
-	motorSW.rpsPID.kp = 0.1;
-	motorSW.rpsPID.ki = 0.0001;
-	motorSW.rpsPID.kd = 0.0;
+	motorSE.rpsPID.one_direction_only = true;
+	motorSE.rpsPID.max_output = MAX_SPEED;
+	motorSE.rpsPID.error_threshold = 0.0;
+	motorSE.rpsPID.kp = 40;
+	motorSE.rpsPID.ki = 30;
+	motorSE.rpsPID.kd = 1;
 
-	motorNW.rpsPID.maxOutput = MAX_SPEED;
-	motorNW.rpsPID.maxError = 1000.0;
-	motorNW.rpsPID.errorThreshold = 3.0;
-	motorNW.rpsPID.kp = 0.1;
-	motorNW.rpsPID.ki = 0.0001;
-	motorNW.rpsPID.kd = 0.0;
+	motorSW.rpsPID.one_direction_only = true;
+	motorSW.rpsPID.max_output = MAX_SPEED;
+	motorSW.rpsPID.min_output = 0.0;
+	motorSW.rpsPID.error_threshold = 0.0;
+	motorSW.rpsPID.kp = 40;
+	motorSW.rpsPID.ki = 30;
+	motorSW.rpsPID.kd = 1;
 
-	motorNE.rpsPID.maxOutput = MAX_SPEED;
-	motorNE.rpsPID.maxError = 1000.0;
-	motorNE.rpsPID.errorThreshold = 3.0;
-	motorNE.rpsPID.kp = 0.1;
-	motorNE.rpsPID.ki = 0.0001;
-	motorNE.rpsPID.kd = 0.0;
+	motorNW.rpsPID.one_direction_only = true;
+	motorNW.rpsPID.max_output = MAX_SPEED;
+	motorNW.rpsPID.error_threshold = 0.0;
+	motorNW.rpsPID.kp = 40;
+	motorNW.rpsPID.ki = 30;
+	motorNW.rpsPID.kd = 1;
 
-	rotationPID.maxOutput = MAX_RPS;
-	rotationPID.maxError = 1000.0;
-	rotationPID.errorThreshold = 3.0;
-	rotationPID.kp = 0.25;
-	rotationPID.ki = 0.4;
-	rotationPID.kd = 0.16;
+	motorNE.rpsPID.one_direction_only = true;
+	motorNE.rpsPID.max_output = MAX_SPEED;
+	motorNE.rpsPID.error_threshold = 0.0;
+	motorNE.rpsPID.kp = 51;
+	motorNE.rpsPID.ki = 36;
+	motorNE.rpsPID.kd = 1;
+
+	rotationPID.max_output = MAX_RPS;
+	rotationPID.error_threshold = 0.0;
+	rotationPID.kp = 0;
+	rotationPID.ki = 0;
+	rotationPID.kd = 0;
 }
 
 void Motor::tick() {
@@ -90,41 +107,22 @@ void Motor::tick() {
 	}
 }
 
-void Motor::setSpeedSE (int16_t speed) {
-	speed = std::clamp(speed, static_cast<int16_t>(-MAX_SPEED), static_cast<int16_t>(MAX_SPEED));
+void Motor::individualMotor::setSpeed(int16_t new_speed) {
+	new_speed = std::clamp(new_speed, static_cast<int16_t>(-MAX_SPEED), static_cast<int16_t>(MAX_SPEED));
 
-	analogWrite(MOTOR_SE_PWM, std::abs(speed));
-	digitalWrite(MOTOR_SE_DIR, speed > 0);
-	motorSE.speed = std::abs(speed);
-	motorSE.direction = speed > 0 ? 1 : -1;
-}
+	if (std::abs(new_speed) < MIN_SPEED) {
+		if (std::abs(new_speed) < (MIN_SPEED / 2)) {
+			new_speed = 0;
+		} else {
+			new_speed = MIN_SPEED * (new_speed > 0 ? 1 : -1);
+		}
+	}
 
-void Motor::setSpeedSW (int16_t speed) {
-	speed = std::clamp(speed, static_cast<int16_t>(-MAX_SPEED), static_cast<int16_t>(MAX_SPEED));
+	analogWrite(pwm_pin, std::abs(new_speed));
+	digitalWrite(dir_pin, new_speed > 0);
 
-	analogWrite(MOTOR_SW_PWM, std::abs(speed));
-	digitalWrite(MOTOR_SW_DIR, speed > 0);
-	motorSW.speed = std::abs(speed);
-	motorSW.direction = speed > 0 ? 1 : -1;
-}
-
-void Motor::setSpeedNE (int16_t speed) {
-	// TODO: Hardcoded 10 offset
-	speed = std::clamp(speed, static_cast<int16_t>(-MAX_SPEED), static_cast<int16_t>(MAX_SPEED));
-
-	analogWrite(MOTOR_NE_PWM, std::abs(speed) + 10);
-	digitalWrite(MOTOR_NE_DIR, speed > 0);
-	motorNE.speed = std::abs(speed) + 10;
-	motorNE.direction = speed > 0 ? 1 : -1;
-}
-
-void Motor::setSpeedNW (int16_t speed) {
-	speed = std::clamp(speed, static_cast<int16_t>(-MAX_SPEED), static_cast<int16_t>(MAX_SPEED));
-
-	analogWrite(MOTOR_NW_PWM, std::abs(speed));
-	digitalWrite(MOTOR_NW_DIR, speed > 0);
-	motorNW.speed = std::abs(speed);
-	motorNW.direction = speed > 0 ? 1 : -1;
+	speed = std::abs(new_speed);
+	direction = new_speed > 0 ? 1 : -1;
 }
 
 void Motor::individualMotor::callback(const unsigned int gpio, unsigned long events) {
@@ -149,7 +147,13 @@ void Motor::individualMotor::getRPS() {
 	}
 
 	const double elapsed_us = (micros() - previous_pulses_timestamp);
-	rps = (pulses * (SECOND * 1000)) / (GEAR_RATIO * TICKS_PER_REVOLUTION_ENCODER * elapsed_us);
+	if (elapsed_us > 0)
+		rps = (pulses * (SECOND * 1000)) / (GEAR_RATIO * TICKS_PER_REVOLUTION_ENCODER * elapsed_us);
+	else
+		rps = 0;
+
+	rps_summatory += rps;
+	rps_count += 1;
 
 	switch (id) {
 		case MOTOR_SE: pulses_SE = 0; previous_pulses_SE_timestamp = micros(); break;
@@ -160,109 +164,48 @@ void Motor::individualMotor::getRPS() {
 	}
 }
 
+double Motor::individualMotor::getRPS_average() {
+	return rps_summatory / rps_count;
+}
+
 void Motor::stop() {
 	if (motorSE.speed == 0 && motorSW.speed == 0 && motorNE.speed == 0 && motorNW.speed == 0) return;
 
-	if (motorSE.speed != 0) setSpeedSE(-MAX_SPEED * motorSE.speed / std::abs(motorSE.speed));
-	if (motorSW.speed != 0) setSpeedSW(-MAX_SPEED * motorSW.speed / std::abs(motorSW.speed));
-	if (motorNE.speed != 0) setSpeedNE(-MAX_SPEED * motorNE.speed / std::abs(motorNE.speed));
-	if (motorNW.speed != 0) setSpeedNW(-MAX_SPEED * motorNW.speed / std::abs(motorNW.speed));
+	if (motorSE.speed != 0) motorSE.setSpeed(-MAX_SPEED * motorSE.speed / std::abs(motorSE.speed));
+	if (motorSW.speed != 0) motorSW.setSpeed(-MAX_SPEED * motorSW.speed / std::abs(motorSW.speed));
+	if (motorNE.speed != 0) motorNE.setSpeed(-MAX_SPEED * motorNE.speed / std::abs(motorNE.speed));
+	if (motorNW.speed != 0) motorNW.setSpeed(-MAX_SPEED * motorNW.speed / std::abs(motorNW.speed));
 
 	delay(50);
 
-	setSpeedSE(0);
-	setSpeedSW(0);
-	setSpeedNE(0);
-	setSpeedNW(0);
-
-	dataPtr->robot_stop = false;
+	motorSE.setSpeed(0);
+	motorSW.setSpeed(0);
+	motorNE.setSpeed(0);
+	motorNW.setSpeed(0);
 }
 
-void Motor::moveSE(const int16_t rps) {
-	if (micros() - motorSE.lastIteration_ms < motorSE.delay_ms) return;
-
-	motorSE.rpsPID.error = std::abs(rps) - std::abs(motorSE.rps);
-	motorSE.rpsPID.target = std::abs(rps);
-	PID::compute(motorSE.rpsPID);
-
-	if (rps > 0) {
-		if (motorSE.previousOut < 0) motorSE.previousOut *= -1;
-		motorSE.previousOut = motorSE.previousOut + motorSE.rpsPID.output;
-		motorSE.previousOut = std::clamp(motorSE.previousOut, MIN_SPEED, MAX_SPEED);
-	} else {
-		if (motorSE.previousOut > 0) motorSE.previousOut *= -1;
-		motorSE.previousOut = motorSE.previousOut - motorSE.rpsPID.output;
-		motorSE.previousOut = std::clamp(motorSE.previousOut, -MAX_SPEED, -MIN_SPEED);
+void Motor::individualMotor::move(const double new_rps) {
+	if (new_rps == 0) {
+		setSpeed(0);
+		return;
 	}
 
-	setSpeedSE(motorSE.previousOut);
-}
+	if (new_rps > 0) rpsPID.accept_type = PID_ACCEPT_POSITIVES_ONLY;
+	else rpsPID.accept_type = PID_ACCEPT_NEGATIVES_ONLY;
 
-void Motor::moveSW(const int16_t rps) {
-	if (micros() - motorSW.lastIteration_ms < motorSW.delay_ms) return;
+	rpsPID.error = (std::abs(new_rps) - rps) * (new_rps > 0 ? 1 : -1);
+	rpsPID.target = new_rps;
 
-	motorSW.rpsPID.error = std::abs(rps) - std::abs(motorSW.rps);
-	motorSW.rpsPID.target = std::abs(rps);
-	PID::compute(motorSW.rpsPID);
+	PID::compute(rpsPID);
 
-	if (rps > 0) {
-		if (motorSW.previousOut < 0) motorSW.previousOut *= -1;
-		motorSW.previousOut = motorSW.previousOut + motorSW.rpsPID.output;
-		motorSW.previousOut = std::clamp(motorSW.previousOut, MIN_SPEED, MAX_SPEED);
-	} else {
-		if (motorSW.previousOut > 0) motorSW.previousOut *= -1;
-		motorSW.previousOut = motorSW.previousOut - motorSW.rpsPID.output;
-		motorSW.previousOut = std::clamp(motorSW.previousOut, -MAX_SPEED, -MIN_SPEED);
-	}
-
-	setSpeedSW(motorSW.previousOut);
-}
-
-void Motor::moveNE(const int16_t rps) {
-	if (micros() - motorNE.lastIteration_ms < motorNE.delay_ms) return;
-
-	motorNE.rpsPID.error = std::abs(rps) - std::abs(motorNE.rps);
-	motorNE.rpsPID.target = std::abs(rps);
-	PID::compute(motorNE.rpsPID);
-
-	if (rps > 0) {
-		if (motorNE.previousOut < 0) motorNE.previousOut *= -1;
-		motorNE.previousOut = motorNE.previousOut + motorNE.rpsPID.output;
-		motorNE.previousOut = std::clamp(motorNE.previousOut, MIN_SPEED, MAX_SPEED);
-	} else {
-		if (motorNE.previousOut > 0) motorNE.previousOut *= -1;
-		motorNE.previousOut = motorNE.previousOut - motorNE.rpsPID.output;
-		motorNE.previousOut = std::clamp(motorNE.previousOut, -MAX_SPEED, -MIN_SPEED);
-	}
-
-	setSpeedNE(motorNE.previousOut);
-}
-
-void Motor::moveNW(const int16_t rps) {
-	if (micros() - motorNW.lastIteration_ms < motorNW.delay_ms) return;
-
-	motorNW.rpsPID.error = std::abs(rps) - std::abs(motorNW.rps);
-	motorNW.rpsPID.target = std::abs(rps);
-	PID::compute(motorNW.rpsPID);
-
-	if (rps > 0) {
-		if (motorNW.previousOut < 0) motorNW.previousOut *= -1;
-		motorNW.previousOut = motorNW.previousOut + motorNW.rpsPID.output;
-		motorNW.previousOut = std::clamp(motorNW.previousOut, MIN_SPEED, MAX_SPEED);
-	} else {
-		if (motorNW.previousOut > 0) motorNW.previousOut *= -1;
-		motorNW.previousOut = motorNW.previousOut - motorNW.rpsPID.output;
-		motorNW.previousOut = std::clamp(motorNW.previousOut, -MAX_SPEED, -MIN_SPEED);
-	}
-
-	setSpeedNW(motorNW.previousOut);
+	setSpeed(static_cast<int16_t>(rpsPID.output));
 }
 
 void Motor::move(const float rps, const float direction, const float facing_target, const float facing_current) {
-	double NWSpeed = rps * cos((PI / 180) * (direction + 350));
-	double SWSpeed = rps * cos((PI / 180) * (direction) + 190);
-	double SESpeed = rps * cos((PI / 180) * (direction) + 170);
-	double NESpeed = rps * cos((PI / 180) * (direction) + 10);
+	double NWSpeed = rps * cos((PI / 180) * (direction + 315));
+	double SWSpeed = rps * cos((PI / 180) * (direction + 225));
+	double SESpeed = rps * cos((PI / 180) * (direction + 135));
+	double NESpeed = rps * cos((PI / 180) * (direction + 45));
 
 	double values[] = { NWSpeed, SWSpeed, SESpeed, NESpeed };
 	const double max = *std::max_element(values, values + 4);
@@ -277,8 +220,8 @@ void Motor::move(const float rps, const float direction, const float facing_targ
 	rotationPID.error = facing_target - facing_current;
 	PID::compute(rotationPID);
 
-	setSpeedNW(NWSpeed + rotationPID.output);
-	setSpeedSW(SWSpeed - rotationPID.output);
-	setSpeedSE(SESpeed + rotationPID.output);
-	setSpeedNE(NESpeed - rotationPID.output);
+	motorNW.move(NWSpeed + rotationPID.output);
+	motorSW.move(SWSpeed - rotationPID.output);
+	motorSE.move(SESpeed + rotationPID.output);
+	motorNE.move(NESpeed - rotationPID.output);
 }

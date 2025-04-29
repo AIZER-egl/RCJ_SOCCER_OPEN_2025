@@ -30,7 +30,6 @@
 #define ROBOT_ON true
 #define ROBOT_OFF false
 
-float yaw = 0;
 bool disabled = false;
 std::vector<uint8_t> message = {};
 
@@ -54,6 +53,8 @@ void sendData(BinarySerializationData& data) {
 
 int main () {
     stdio_init_all();
+
+	delay(2000);
 
 	Motor motor;
 	Kicker kicker;
@@ -87,7 +88,6 @@ int main () {
 	pinMode(BUILTIN_LED, OUTPUT);
 	digitalWrite(BUILTIN_LED, HIGH);
 
-	delay(2000);
 	kicker.kick();
 
 	for (;;) {
@@ -109,6 +109,11 @@ int main () {
 					data.robot_facing = receivedData.value().robot_facing;
 					data.robot_stop = receivedData.value().robot_stop;
 					data.kicker_active = receivedData.value().kicker_active;
+
+					data.motor_ne_rps = static_cast<float>(motor.motorNE.getRPS_average());
+					data.motor_nw_rps = static_cast<float>(motor.motorNW.getRPS_average());
+					data.motor_se_rps = static_cast<float>(motor.motorSE.getRPS_average());
+					data.motor_sw_rps = static_cast<float>(motor.motorSW.getRPS_average());
 				}
 
 				sendData(data);
@@ -124,11 +129,29 @@ int main () {
 
 		if (action_button_read && !previous_action_button_read) {
 			if (robot_state == ROBOT_OFF) {
+				PID::reset(motor.motorSE.rpsPID);
+				PID::reset(motor.motorSW.rpsPID);
+				PID::reset(motor.motorNE.rpsPID);
+				PID::reset(motor.motorNW.rpsPID);
+				PID::reset(motor.rotationPID);
 				robot_state = ROBOT_ON;
 				led_rate = 100;
 				kicker.kick();
 				bno.setYawOffset(bno.raw_yaw);
+				motor.motorSE.setSpeed(0);
+				motor.motorSW.setSpeed(0);
+				motor.motorNW.setSpeed(0);
+				motor.motorNE.setSpeed(0);
+				motor.motorSE.rps_count = 0;
+				motor.motorSE.rps_summatory = 0;
+				motor.motorSW.rps_count = 0;
+				motor.motorSW.rps_summatory = 0;
+				motor.motorNE.rps_count = 0;
+				motor.motorNE.rps_summatory = 0;
+				motor.motorNW.rps_count = 0;
+				motor.motorNW.rps_summatory = 0;
 			} else {
+				motor.stop();
 				led_rate = 500;
 				robot_state = ROBOT_OFF;
 			}
@@ -149,12 +172,11 @@ int main () {
 		}
 
 		if (millis() - last_motor_time >= 25) {
-
 			if (data.robot_stop || robot_state == ROBOT_OFF) {
-				motor.stop();
+				// motor.stop();
 			} else {
 				motor.move(
-					data.robot_speed,
+					static_cast<float>(data.robot_speed) / 10,
 					data.robot_direction,
 					data.robot_facing,
 					data.compass_yaw
@@ -170,11 +192,3 @@ int main () {
 
 
 #pragma clang diagnostic pop
-
-
-// uint16_t raw_value = adc_read();
-// const float conversion_factor = 3.3f / (1 << 12); // (1 << 12) is 4096
-// float voltage = raw_value * conversion_factor;
-//
-// last_time = millis();
-// std::cout << voltage << " " << raw_value << std::endl;

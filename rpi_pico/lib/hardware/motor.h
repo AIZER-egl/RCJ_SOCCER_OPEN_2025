@@ -39,9 +39,9 @@
 #define GEAR_RATIO 9.68
 
 #define MAX_SPEED 255
-#define MIN_SPEED 25
+#define MIN_SPEED 15
 
-#define MAX_RPS 80
+#define MAX_RPS 18
 #define MIN_RPS 0
 
 #define PI 3.141592
@@ -51,25 +51,29 @@ public:
 	Motor();
 
 	struct individualMotor {
+		std::string name;
 		uint8_t id{};
 		int8_t direction{};
 		uint16_t speed{};
 		double rps{};
 
-		unsigned long previousPulsesA{};
-		unsigned long previousPulsesB{};
-
-		unsigned long previousTimeA{};
-		unsigned long previousTimeB{};
+		void setSpeed(int16_t new_speed);
+		void move(double new_rps);
 
 		static void callback (unsigned int gpio, unsigned long events);
 
 		void getRPS ();
+		double getRPS_average ();
 
 		PID::PidParameters rpsPID;
-		int delay_ms = 20;
-		unsigned long lastIteration_ms = 0;
-		int previousOut{};
+
+		int pwm_pin{};
+		int dir_pin{};
+
+		double rps_summatory = 0;
+		unsigned long long rps_count = 0;
+		unsigned long long lastIteration_ms = 0;
+		double previousOut{};
 	};
 
 	individualMotor motorSE;
@@ -79,14 +83,6 @@ public:
 
 	PID::PidParameters rotationPID;
 
-	void setSpeedSE (int16_t speed);
-	void setSpeedSW (int16_t speed);
-	void setSpeedNE (int16_t speed);
-	void setSpeedNW (int16_t speed);
-
-	void moveSE (int16_t rps);
-	void moveSW (int16_t rps);
-	void moveNE (int16_t rps);
 	void moveNW (int16_t rps);
 
 	void begin (BinarySerializationData& data);
