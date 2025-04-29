@@ -116,9 +116,13 @@ int main (int argc, char **argv) {
             previous_time = millis();
         }
 
-		data.robot_direction = 0;
-		data.robot_speed = 115; // 11.5 RPS
-		data.robot_facing = 0;
+		if (front_angle != INVALID_VALUE) {
+			data.robot_direction = front_angle;
+			data.robot_speed = 115; // 11.5 RPS
+			data.robot_facing = 0;
+		} else {
+			data.robot_stop = true;
+		}
 
        	ros::spinOnce();
        	loop_rate.sleep();
