@@ -9,6 +9,11 @@
 struct BinarySerializationData {
 	int16_t compass_yaw;
 
+	float motor_ne_rps;
+	float motor_nw_rps;
+	float motor_se_rps;
+	float motor_sw_rps;
+
 	int16_t robot_direction;
 	int16_t robot_speed;
 	int16_t robot_facing;
