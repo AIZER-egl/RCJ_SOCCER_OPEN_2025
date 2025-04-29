@@ -39,7 +39,7 @@ struct BinarySerializationData {
 	 * calibration purposes.
 	 */
 	uint8_t ldr_channel;
-	uint8_t ldr_value;
+	uint16_t ldr_value;
 
 	bool kicker_active;
 };
