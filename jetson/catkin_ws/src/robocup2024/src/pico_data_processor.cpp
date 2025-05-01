@@ -130,7 +130,7 @@ int main (int argc, char **argv) {
 		} else if (omni_angle != INVALID_VALUE) {
 			data.robot_direction = omni_angle;
 		} else {
-			data.robot_direction = omni_angle + (60 * signOf(data.robot_direction);
+			data.robot_direction = omni_angle + (60 * signOf(data.robot_direction));
 			data.robot_speed = 40;
 			data.robot_facing = 0;
 			data.robot_stop = true;
