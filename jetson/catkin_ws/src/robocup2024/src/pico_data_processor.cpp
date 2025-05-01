@@ -80,6 +80,12 @@ unsigned long long millis() {
     return static_cast<unsigned long long>(millisSinceEpoch.count());
 }
 
+int signOf (float value) {
+	if (value > 0) return 1;
+	if (value < 0) return -1;
+	return 0;
+}
+
 int main (int argc, char **argv) {
     ros::init(argc, argv, "pico_data_processor");
     ros::NodeHandle nh;
@@ -116,22 +122,19 @@ int main (int argc, char **argv) {
             previous_time = millis();
         }
 
-		/*if (front_angle != INVALID_VALUE) {
+		if (front_angle != INVALID_VALUE) {
 			data.robot_direction = front_angle;
-			data.robot_speed = 115; // 11.5 RPS
+			data.robot_speed = 40;
 			data.robot_facing = 0;
 			data.robot_stop = false;
+		} else if (omni_angle != INVALID_VALUE) {
+			data.robot_direction = omni_angle;
 		} else {
-			data.robot_direction = 0;
-			data.robot_speed = 0;
+			data.robot_direction = omni_angle + (60 * signOf(data.robot_direction);
+			data.robot_speed = 40;
 			data.robot_facing = 0;
 			data.robot_stop = true;
-		}*/
-
-		data.robot_direction = 0;
-		data.robot_speed = 115;
-		data.robot_facing = 0;
-		data.robot_stop = false;
+		}
 
        	ros::spinOnce();
        	loop_rate.sleep();

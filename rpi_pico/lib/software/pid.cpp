@@ -82,6 +82,10 @@ void PID::compute(PidParameters& pid) {
         if (pid.accept_type == PID_ACCEPT_NEGATIVES_ONLY && pid.output > 0) pid.output = 0;
     }
 
-    pid.previous_error = pid.error;
-    pid.last_iteration_ms = millis();
+    if (pid.reset_within_threshold && (std::fabs(pid.error) < pid.error_threshold)) {
+        reset(pid);
+    } else {
+        pid.previous_error = pid.error;
+        pid.last_iteration_ms = millis();
+    }
 }

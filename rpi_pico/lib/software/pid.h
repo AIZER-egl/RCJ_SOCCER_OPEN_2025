@@ -35,6 +35,10 @@ public:
         // it will only accept the values specified in the accept_positives
         bool one_direction_only = false;
         bool accept_type = PID_ACCEPT_POSITIVES_ONLY;
+
+        // IF reset_within_threshold SET TO TRUE
+        // it will execute PID::reset if within error_threshold
+        bool reset_within_threshold = false;
     };
     static void reset(PidParameters& pid);
     static void compute(PidParameters& pid);
