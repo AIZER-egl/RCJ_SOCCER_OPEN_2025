@@ -62,7 +62,6 @@ void Motor::begin (BinarySerializationData& data) {
 
 	motorSW.rpsPID.one_direction_only = true;
 	motorSW.rpsPID.max_output = MAX_SPEED;
-	motorSW.rpsPID.min_output = 0.0;
 	motorSW.rpsPID.error_threshold = 0.0;
 	motorSW.rpsPID.kp = 40;
 	motorSW.rpsPID.ki = 30;
@@ -85,7 +84,7 @@ void Motor::begin (BinarySerializationData& data) {
 	rotationPID.one_direction_only = false;
 	rotationPID.reset_within_threshold = true;
 	rotationPID.max_output = 1.5;
-	rotationPID.error_threshold = 3.0;
+	rotationPID.error_threshold = 8.0;
 	rotationPID.kp = 0.01;
 	rotationPID.ki = 0.01;
 	rotationPID.kd = 0.0;
@@ -106,10 +105,12 @@ void Motor::tick() {
 		// dataPtr -> motor_se_rps = static_cast<float>(motorSE.rps);
 
 		previousTick = millis();
+
+		if (robot_stopped) stop();
 	}
 }
 
-void Motor::individualMotor::setSpeed(int16_t new_speed) {
+void Motor::individualMotor::setSpeed(int16_t new_speed, bool save_direction) {
 	new_speed = std::clamp(new_speed, static_cast<int16_t>(-MAX_SPEED), static_cast<int16_t>(MAX_SPEED));
 
 	if (std::abs(new_speed) < MIN_SPEED) {
@@ -123,17 +124,9 @@ void Motor::individualMotor::setSpeed(int16_t new_speed) {
 	analogWrite(pwm_pin, std::abs(new_speed));
 	digitalWrite(dir_pin, new_speed > 0);
 
-	speed = std::abs(new_speed);
-	direction = new_speed > 0 ? 1 : -1;
-}
-
-void Motor::individualMotor::callback(const unsigned int gpio, unsigned long events) {
-	switch (gpio) {
-		case MOTOR_SE_ENC_B: pulses_SE++; break;
-		case MOTOR_SW_ENC_B: pulses_SW++; break;
-		case MOTOR_NE_ENC_B: pulses_NE++; break;
-		case MOTOR_NW_ENC_B: pulses_NW++; break;
-		default: break;
+	if (save_direction) {
+		speed = std::abs(new_speed);
+		direction = new_speed > 0 ? 1 : -1;
 	}
 }
 
@@ -148,11 +141,14 @@ void Motor::individualMotor::getRPS() {
 		default: pulses = 0; previous_pulses_timestamp = 0; break;
 	}
 
+	previous_rps = rps;
 	const double elapsed_us = (micros() - previous_pulses_timestamp);
 	if (elapsed_us > 0)
 		rps = (pulses * (SECOND * 1000)) / (GEAR_RATIO * TICKS_PER_REVOLUTION_ENCODER * elapsed_us);
 	else
 		rps = 0;
+
+	if (rps > 18) rps = previous_rps; // SW Motor, Robot 1 encoder is failing, using this guard to prevent making things worse
 
 	rps_summatory += rps;
 	rps_count += 1;
@@ -166,24 +162,40 @@ void Motor::individualMotor::getRPS() {
 	}
 }
 
+void Motor::individualMotor::callback(const unsigned int gpio, unsigned long events) {
+	switch (gpio) {
+		case MOTOR_SE_ENC_B: pulses_SE++; break;
+		case MOTOR_SW_ENC_B: pulses_SW++; break;
+		case MOTOR_NE_ENC_B: pulses_NE++; break;
+		case MOTOR_NW_ENC_B: pulses_NW++; break;
+		default: break;
+	}
+}
+
 double Motor::individualMotor::getRPS_average() {
+	if (rps_count == 0) return 0;
 	return rps_summatory / rps_count;
 }
 
 void Motor::stop() {
-	if (motorSE.speed == 0 && motorSW.speed == 0 && motorNE.speed == 0 && motorNW.speed == 0) return;
+	if (motorSE.rps == 0 && motorSW.rps == 0 && motorNE.rps == 0 && motorNW.rps == 0) return;
 
-	if (motorSE.speed != 0) motorSE.setSpeed(-MAX_SPEED * motorSE.speed / std::abs(motorSE.speed));
-	if (motorSW.speed != 0) motorSW.setSpeed(-MAX_SPEED * motorSW.speed / std::abs(motorSW.speed));
-	if (motorNE.speed != 0) motorNE.setSpeed(-MAX_SPEED * motorNE.speed / std::abs(motorNE.speed));
-	if (motorNW.speed != 0) motorNW.setSpeed(-MAX_SPEED * motorNW.speed / std::abs(motorNW.speed));
+	if (!robot_stopped) robot_stopped = true;
+	dataPtr -> robot_speed = 0;
+	dataPtr -> robot_direction = 0;
 
-	delay(50);
+	if (motorSE.speed != 0) motorSE.setSpeed(-MAX_SPEED * motorSE.speed / std::abs(motorSE.speed), false);
+	if (motorSW.speed != 0) motorSW.setSpeed(-MAX_SPEED * motorSW.speed / std::abs(motorSW.speed), false);
+	if (motorNE.speed != 0) motorNE.setSpeed(-MAX_SPEED * motorNE.speed / std::abs(motorNE.speed), false);
+	if (motorNW.speed != 0) motorNW.setSpeed(-MAX_SPEED * motorNW.speed / std::abs(motorNW.speed), false);
 
-	motorSE.setSpeed(0);
-	motorSW.setSpeed(0);
-	motorNE.setSpeed(0);
-	motorNW.setSpeed(0);
+	std::cout << "se rps" << motorSE.rps << std::endl;
+	if (motorSE.rps < 1.5 || motorSE.rps > (motorSE.previous_rps + 0.2)) motorSE.setSpeed(0);
+	if (motorSW.rps < 1.5 || motorSW.rps > (motorSW.previous_rps + 0.2)) motorSW.setSpeed(0);
+	if (motorNE.rps < 1.5 || motorNE.rps > (motorNE.previous_rps + 0.2)) motorNE.setSpeed(0);
+	if (motorNW.rps < 1.5 || motorNW.rps > (motorNW.previous_rps + 0.2)) motorNW.setSpeed(0);
+
+	// robot_stopped flag is automatically set to false when move method is called
 }
 
 void Motor::individualMotor::move(const double new_rps) {
@@ -203,7 +215,12 @@ void Motor::individualMotor::move(const double new_rps) {
 	setSpeed(static_cast<int16_t>(rpsPID.output));
 }
 
-void Motor::move(const float rps, const float direction, const float facing_target, const float facing_current) {
+void Motor::move(const float rps, const float direction, const float facing_target, const float facing_current, const bool save_direction) {
+	if (save_direction) current_direction = direction;
+	// Robot stop is automatically turned of if move function is called
+	if (robot_stopped) robot_stopped = false;
+
+
 	double NWSpeed = rps * cos((PI / 180) * (direction + 315));
 	double SWSpeed = rps * cos((PI / 180) * (direction + 225));
 	double SESpeed = rps * cos((PI / 180) * (direction + 135));
@@ -222,8 +239,8 @@ void Motor::move(const float rps, const float direction, const float facing_targ
 	rotationPID.error = facing_target - facing_current;
 	PID::compute(rotationPID);
 
-	motorNW.move(NWSpeed + rotationPID.output);
-	motorSW.move(SWSpeed - rotationPID.output);
+	motorNW.move(NWSpeed + 0);
+	motorSW.move(SWSpeed - 0);
 	motorSE.move(SESpeed + rotationPID.output);
 	motorNE.move(NESpeed - rotationPID.output);
 }

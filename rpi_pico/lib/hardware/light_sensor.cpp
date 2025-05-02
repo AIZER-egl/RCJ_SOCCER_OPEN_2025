@@ -63,18 +63,21 @@ void Light_Sensor::tick() {
 	}
 
 	if (timestamp_ms - previos_data_update >= 30) {
-		switch (dataPtr->ldr_channel) {
-			case 0:	dataPtr->ldr_value = static_cast<int16_t>(ldr_0); break;
-			case 1:	dataPtr->ldr_value = static_cast<int16_t>(ldr_1); break;
-			case 2:	dataPtr->ldr_value = static_cast<int16_t>(ldr_2); break;
-			case 3:	dataPtr->ldr_value = static_cast<int16_t>(ldr_3); break;
-			case 4:	dataPtr->ldr_value = static_cast<int16_t>(ldr_4); break;
-			case 5:	dataPtr->ldr_value = static_cast<int16_t>(ldr_5); break;
-			case 6:	dataPtr->ldr_value = static_cast<int16_t>(ldr_6); break;
-			case 7:	dataPtr->ldr_value = static_cast<int16_t>(ldr_7); break;
-			default: dataPtr->ldr_value = 0; break;
-		}
-
+		dataPtr -> ldr_value = static_cast<int16_t>(ldr_0);
 		previos_data_update = time_us_64() / 1000;
 	}
+	// 	switch (dataPtr->ldr_channel) {
+	// 		case 0:	dataPtr->ldr_value = static_cast<int16_t>(ldr_0); break;
+	// 		case 1:	dataPtr->ldr_value = static_cast<int16_t>(ldr_1); break;
+	// 		case 2:	dataPtr->ldr_value = static_cast<int16_t>(ldr_2); break;
+	// 		case 3:	dataPtr->ldr_value = static_cast<int16_t>(ldr_3); break;
+	// 		case 4:	dataPtr->ldr_value = static_cast<int16_t>(ldr_4); break;
+	// 		case 5:	dataPtr->ldr_value = static_cast<int16_t>(ldr_5); break;
+	// 		case 6:	dataPtr->ldr_value = static_cast<int16_t>(ldr_6); break;
+	// 		case 7:	dataPtr->ldr_value = static_cast<int16_t>(ldr_7); break;
+	// 		default: dataPtr->ldr_value = 0; break;
+	// 	}
+	//
+	// 	previos_data_update = time_us_64() / 1000;
+	// }
 }

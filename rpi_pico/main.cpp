@@ -32,6 +32,7 @@
 
 bool disabled = false;
 std::vector<uint8_t> message = {};
+int ldr_3_threshold = 1024;
 
 void sendData(BinarySerializationData& data) {
 	std::vector<uint8_t> bytes = Serializer::serialize(data);
@@ -65,8 +66,8 @@ int main () {
 	unsigned long long last_motor_time = millis();
 	unsigned long long last_led_time = millis();
 	unsigned long led_rate = 500;
-	bool previous_action_button_read = false;
-	bool action_button_read = false;
+    bool previous_action_button_read = false;
+    bool action_button_read = false;
 	bool robot_state = false;
 	bool led_state = true;
 
@@ -77,8 +78,6 @@ int main () {
     data.robot_facing = 0;
     data.robot_stop = false;
 	data.kicker_active = false;
-	data.ldr_channel = 5;
-	data.ldr_value = 100;
 
     bno.begin(I2C_PORT_0, 100 * 1000, SDA, SCL, data);
     motor.begin(data);
@@ -90,7 +89,7 @@ int main () {
 	pinMode(BUILTIN_LED, OUTPUT);
 	digitalWrite(BUILTIN_LED, HIGH);
 
-	kicker.kick();
+	uint8_t i = 0;
 
 	for (;;) {
 		bno.tick();
@@ -99,6 +98,8 @@ int main () {
 		light_sensor.tick();
 
 		action_button_read = digitalRead(ACTION_BUTTON);
+
+		if (ldr_3_threshold < light_sensor.ldr_3) {}
 
 		int received_char;
 		while ((received_char = getchar_timeout_us(0)) != PICO_ERROR_TIMEOUT) {
@@ -114,9 +115,6 @@ int main () {
 				}
 
 				sendData(data);
-
-				data.ldr_channel += 1;
-				if (data.ldr_channel > 7) data.ldr_channel = 0;
 
 				message.clear();
 			} else {
@@ -136,7 +134,7 @@ int main () {
 				PID::reset(motor.rotationPID);
 				robot_state = ROBOT_ON;
 				led_rate = 100;
-				kicker.kick();
+				// kicker.kick();
 				bno.setYawOffset(bno.raw_yaw);
 				motor.motorSE.setSpeed(0);
 				motor.motorSW.setSpeed(0);
@@ -150,6 +148,7 @@ int main () {
 				motor.motorNE.rps_summatory = 0;
 				motor.motorNW.rps_count = 0;
 				motor.motorNW.rps_summatory = 0;
+				ldr_3_threshold = light_sensor.ldr_3 + 40;
 			} else {
 				motor.stop();
 				led_rate = 500;
@@ -175,12 +174,17 @@ int main () {
 			if (data.robot_stop || robot_state == ROBOT_OFF) {
 				motor.stop();
 			} else {
+				// std::cout << "NE: " << motor.motorNE.getRPS_average() <<
+				// 	" NW: " << motor.motorNW.getRPS_average() <<
+				// 	" SW: " << motor.motorSW.getRPS_average() <<
+				// 	" SE: " << motor.motorSE.getRPS_average() << std::endl;
+
 				motor.move(
 					static_cast<float>(data.robot_speed) / 10,
 					data.robot_direction,
 					data.robot_facing,
 					data.compass_yaw
-					);
+				);
 			}
 
 			last_motor_time = millis();

@@ -22,8 +22,8 @@
 
 #define MOTOR_SW_DIR 2
 #define MOTOR_SW_PWM 3
-#define MOTOR_SW_ENC_A 10
-#define MOTOR_SW_ENC_B 11
+#define MOTOR_SW_ENC_A 11 // Encoder A and Encoder B are switched because Robot 1 Encoder B is failing
+#define MOTOR_SW_ENC_B 10
 
 #define MOTOR_NW_DIR 26
 #define MOTOR_NW_PWM 22
@@ -56,8 +56,9 @@ public:
 		int8_t direction{};
 		uint16_t speed{};
 		double rps{};
+		double previous_rps{};
 
-		void setSpeed(int16_t new_speed);
+		void setSpeed(int16_t new_speed, bool save_direction = true);
 		void move(double new_rps);
 
 		static void callback (unsigned int gpio, unsigned long events);
@@ -91,10 +92,13 @@ public:
 
 	void tick ();
 
-	void move (float rps, float direction, float facing_target, float facing_current);
+	void move (float rps, float direction, float facing_target, float facing_current, bool save_direction = true);
 
 	void rotate (int16_t angle);
+
+	float current_direction{};
 private:
+	bool robot_stopped = false;
 	BinarySerializationData* dataPtr;
 	unsigned long long previousTick{};
 };
