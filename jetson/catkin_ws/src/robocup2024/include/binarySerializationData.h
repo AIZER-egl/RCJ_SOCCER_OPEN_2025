@@ -38,7 +38,7 @@ struct BinarySerializationData {
 	 * and since time is key in this time of the development, I will not add this feature since it is only for
 	 * calibration purposes.
 	 */
-	uint8_t ldr_channel;
+//	uint8_t ldr_channel;
 	uint16_t ldr_value;
 
 	bool kicker_active;

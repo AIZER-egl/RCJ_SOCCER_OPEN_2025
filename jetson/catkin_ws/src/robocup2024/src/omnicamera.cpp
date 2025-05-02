@@ -27,10 +27,11 @@
 #define DISPLAY_HEIGHT 473
 #define DISPLAY_WIDTH 768
 
-#define ROBOT_ORIGIN_X 351
-#define ROBOT_ORIGIN_Y 210
+#define ROBOT_ORIGIN_X 368
+#define ROBOT_ORIGIN_Y 275
 
 #define INVALID_VALUE 999
+#define FRAME_RATE 20
 
 void on_mouse (int event, int x, int y, int flags, void* userdata) {
 	(void)userdata;
@@ -103,19 +104,18 @@ int main (int argc, char **argv) {
 	int recording_fps;
 	#ifdef RECORD_VIDEO
 		record_video_flag = true;
-		recording_fps = 10;
 		output_filename = "/home/aizer/Documents/RCJ_SOCCER_OPEN_2025/jetson/catkin_ws/src/robocup2024/out/omnicamera_out_";
 		output_filename += getCurrentDateTimeString();
 		output_filename += ".mp4";
 
-		ROS_INFO("Video recording ENABLED via compile-time define. FPS: %d, Output file: %s", recording_fps, output_filename.c_str());
+		ROS_INFO("Video recording ENABLED via compile-time define. FPS: %d, Output file: %s", FRAME_RATE, output_filename.c_str());
 	#else
 		ROS_INFO("Video recording DISABLED via compile-time define.");
 	#endif
 
 	Gstreamer gstreamer;
 	gstreamer.set_sensor_id(0);
-	gstreamer.set_framerate(10);
+	gstreamer.set_framerate(FRAME_RATE);
 	gstreamer.set_width(WIDTH);
 	gstreamer.set_height(HEIGHT);
 
@@ -155,8 +155,8 @@ int main (int argc, char **argv) {
 	}
 
 	BlobDetection ballDetection;
-	ballDetection.set_color_range(cv::Scalar(0, 5, 97), cv::Scalar(24, 56, 208));
-	ballDetection.set_area(15, 100000);
+	ballDetection.set_color_range(cv::Scalar(0, 6, 116), cv::Scalar(39, 48, 210));
+	ballDetection.set_area(7, 100000);
 
 	float ball_angle = 0;
 	unsigned long long ms_count = 0;
@@ -167,14 +167,14 @@ int main (int argc, char **argv) {
 		if (frame_cpu.empty()) continue;
 
 		preprocessing::resize(frame_cpu, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-		preprocessing::contrast(frame_cpu, 1.2, 2.3);
+		preprocessing::contrast(frame_cpu, 1.4, 2.5);
 		preprocessing::gamma_correction(frame_cpu, 1.9);
 		preprocessing::brightness(frame_cpu, 1.4);
 		preprocessing::saturation(frame_cpu, 2);
 		cv::flip(frame_cpu, frame_cpu, 0);
 
 		std::vector<BlobDetection::Blob> ballBlobs = ballDetection.detect(frame_cpu);
-		BlobDetection::plot_blobs(frame_cpu, ballBlobs, cv::Scalar(255, 255, 255));
+//		BlobDetection::plot_blobs(frame_cpu, ballBlobs, cv::Scalar(255, 255, 255));
 
 		auto ball = BlobDetection::biggest_blob(ballBlobs);
 
@@ -185,8 +185,8 @@ int main (int argc, char **argv) {
 			const float ball_cy = ball.value().y + ball.value().height / 2;
 			const float view_ball_cx = ball_cx - ROBOT_ORIGIN_X;
 			const float view_ball_cy = ball_cy - ROBOT_ORIGIN_Y;
-	
-			ball_angle = get_angle(view_ball_cx, view_ball_cy);				
+
+			ball_angle = get_angle(view_ball_cx, view_ball_cy);
 		}
 
 		std_msgs::Float32MultiArray msg;

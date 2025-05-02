@@ -8,8 +8,8 @@ import threading
 import logging # Importar el módulo logging
 from std_msgs.msg import ByteMultiArray
 
-SERIAL_PACKET_SIZE = 13
-SERIAL_TIMEOUT = 0.1
+SERIAL_PACKET_SIZE = 12
+SERIAL_TIMEOUT = 0.01
 
 serial_port = None
 serial_lock = threading.Lock()
@@ -65,6 +65,7 @@ def serial_read_thread(pub_serial_rx):
 				cleaned_bytes = line_bytes.rstrip()
 
 				if len(cleaned_bytes) == SERIAL_PACKET_SIZE:
+					None
 					rospy.loginfo(f"Received packet with expected length {len(cleaned_bytes)} bytes.")
 				else:
 					rospy.logwarn(f"Received packet with unexpected length: {len(cleaned_bytes)} bytes "
@@ -99,6 +100,7 @@ def serial_tx_callback(msg):
 	global serial_port, serial_lock, SERIAL_PACKET_SIZE, file_logger
 
 	try:
+		None
 		rospy.loginfo(f"DEBUG: Callback entered. msg.data type: {type(msg.data)}, value: {msg.data}")
 	except Exception as e:
 		rospy.logerr(f"DEBUG: Error accessing msg.data at start of callback: {e}")

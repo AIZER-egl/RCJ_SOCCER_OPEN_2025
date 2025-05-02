@@ -28,6 +28,8 @@
 #define DISPLAY_WIDTH 768
 
 #define INVALID_VALUE 999
+#define FRAME_RATE 30
+
 
 std::string getCurrentDateTimeString() {
 	auto now = std::chrono::system_clock::now();
@@ -77,19 +79,18 @@ int main (int argc, char **argv) {
 	int recording_fps;
 	#ifdef RECORD_VIDEO
 		record_video_flag = true;
-		recording_fps = 10;
 		output_filename = "/home/aizer/Documents/RCJ_SOCCER_OPEN_2025/jetson/catkin_ws/src/robocup2024/out/frontcamera_out_";
 		output_filename += getCurrentDateTimeString();
 		output_filename += ".mp4";
 
-		ROS_INFO("Video recording ENABLED via compile-time define. FPS: %d, Output file: %s", recording_fps, output_filename.c_str());
+		ROS_INFO("Video recording ENABLED via compile-time define. FPS: %d, Output file: %s", FRAME_RATE, output_filename.c_str());
 	#else
 		ROS_INFO("Video recording DISABLED via compile-time define.");
 	#endif
 
 	Gstreamer gstreamer;
 	gstreamer.set_sensor_id(1);
-	gstreamer.set_framerate(10);
+	gstreamer.set_framerate(FRAME_RATE);
 	gstreamer.set_width(WIDTH);
 	gstreamer.set_height(HEIGHT);
 
