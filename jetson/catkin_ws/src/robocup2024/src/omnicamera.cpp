@@ -21,7 +21,7 @@
 #define PI 3.1415926
 #define EULER 2.71828
 
-//#define SHOW_IMAGE
+#define SHOW_IMAGE
 //#define RECORD_VIDEO
 
 #define DISPLAY_HEIGHT 473
@@ -82,6 +82,32 @@ float get_angle (float x, float y) {
 
 	if (angle > 180) angle -= 360;
 	return angle;
+}
+
+void applyCircularMask(const cv::Mat& frame, int center_x, int center_y, cv::Mat& output_frame, bool modify_inplace = false) {
+	if (center_x < 0 || center_x >= frame.cols || center_y < 0 || center_y >= frame.rows) {
+		std::cerr << "Error: El centro del círculo está fuera de los límites de la imagen." << std::endl;
+		if (!modify_inplace) {
+			frame.copyTo(output_frame);
+		}
+		return;
+	}
+	int dist_left = center_x;
+	int dist_right = frame.cols - 1 - center_x;
+	int dist_top = center_y;
+	int dist_bottom = frame.rows - 1 - center_y;
+	int radius = std::min({dist_left, dist_right, dist_top, dist_bottom});
+	radius = std::max(0, radius);
+	cv::Mat mask = cv::Mat::zeros(frame.size(), CV_8UC1);
+	cv::circle(mask, cv::Point(center_x, center_y), radius, cv::Scalar(255), cv::FILLED, cv::LINE_AA);
+	if (modify_inplace) {
+		cv::Mat masked_image;
+		frame.copyTo(masked_image, mask);
+		output_frame = masked_image;
+	} else {
+		output_frame = cv::Mat::zeros(frame.size(), frame.type());
+		frame.copyTo(output_frame, mask);
+	}
 }
 
 int main (int argc, char **argv) {
@@ -155,7 +181,7 @@ int main (int argc, char **argv) {
 	}
 
 	BlobDetection ballDetection;
-	ballDetection.set_color_range(cv::Scalar(0, 6, 116), cv::Scalar(39, 48, 210));
+	ballDetection.set_color_range(cv::Scalar(0, 200, 120), cv::Scalar(171, 255, 219));
 	ballDetection.set_area(7, 100000);
 
 	float ball_angle = 0;
@@ -173,8 +199,10 @@ int main (int argc, char **argv) {
 		preprocessing::saturation(frame_cpu, 2);
 		cv::flip(frame_cpu, frame_cpu, 0);
 
+		applyCircularMask(frame_cpu, ROBOT_ORIGIN_X, ROBOT_ORIGIN_Y, frame_cpu, true);
+
 		std::vector<BlobDetection::Blob> ballBlobs = ballDetection.detect(frame_cpu);
-//		BlobDetection::plot_blobs(frame_cpu, ballBlobs, cv::Scalar(255, 255, 255));
+		BlobDetection::plot_blobs(frame_cpu, ballBlobs, cv::Scalar(255, 255, 255));
 
 		auto ball = BlobDetection::biggest_blob(ballBlobs);
 

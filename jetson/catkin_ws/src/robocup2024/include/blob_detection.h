@@ -8,7 +8,7 @@
 class [[maybe_unused]] BlobDetection {
 private:
 	cv::Scalar lower_bound = cv::Scalar(0, 0, 0);
-	cv::Scalar upper_bound = cv::Scalar(255, 255, 255);
+	cv::Scalar upper_bound = cv::Scalar(179, 255, 255);
 	int min_area = 1000;
 	int max_area = 100000;
 public:
