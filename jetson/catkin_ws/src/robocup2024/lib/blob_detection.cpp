@@ -15,8 +15,18 @@ BlobDetection::BlobDetection() = default;
 }
 
 [[maybe_unused]] std::vector<BlobDetection::Blob> BlobDetection::detect(cv::Mat &frame) {
+	cv::Mat hsv_frame;
+	cv::cvtColor(frame, hsv_frame, cv::COLOR_BGR2HSV);
+
 	cv::Mat mask;
-	cv::inRange(frame, lower_bound, upper_bound, mask);
+	cv::inRange(hsv_frame, lower_bound, upper_bound, mask);
+
+	// --- Opcional: Aplicar operaciones morfológicas para limpiar la máscara ---
+	// Puedes descomentar estas líneas si necesitas eliminar ruido o cerrar huecos
+	// cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
+	// cv::morphologyEx(mask, mask, cv::MORPH_OPEN, kernel); // Elimina ruido pequeño (erosión seguida de dilatación)
+	// cv::morphologyEx(mask, mask, cv::MORPH_CLOSE, kernel); // Cierra pequeños huecos (dilatación seguida de erosión)
+	// -----------------------------------------------------------------------
 
 	std::vector<std::vector<cv::Point>> contours;
 	std::vector<cv::Vec4i> hierarchy;
