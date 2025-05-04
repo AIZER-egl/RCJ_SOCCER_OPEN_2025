@@ -22,14 +22,24 @@
 #define EULER 2.71828
 
 //#define SHOW_IMAGE
-//#define RECORD_VIDEO
+#define RECORD_VIDEO
 
 #define DISPLAY_HEIGHT 473
 #define DISPLAY_WIDTH 768
 
 #define INVALID_VALUE 999
-#define FRAME_RATE 30
+#define FRAME_RATE 14
 
+#define IGNORE_BEFORE_Y 51
+
+void on_mouse (int event, int x, int y, int flags, void* userdata) {
+	(void)userdata;
+	(void)flags;
+
+	if (event == cv::EVENT_LBUTTONDOWN) {
+		ROS_INFO("(x: %d, y: %d)", x, y);
+	}
+}
 
 std::string getCurrentDateTimeString() {
 	auto now = std::chrono::system_clock::now();
@@ -59,6 +69,26 @@ float get_distance_cm (float distance_pixels) {
 	return A / std::sqrt(first_term + second_term) + C;
 }
 
+void drawIgnoreArea(cv::Mat& image, int ignore_before_y,
+                    const cv::Scalar& color = cv::Scalar(0, 0, 0),
+                    int thickness = cv::FILLED)
+{
+    if (image.empty()) {
+        std::cerr << "Error: La imagen de entrada está vacía." << std::endl;
+        return;
+    }
+
+    if (ignore_before_y <= 0) {
+        return;
+    }
+    int width = image.cols;
+    int actual_y = std::min(ignore_before_y, image.rows);
+    cv::Point pt1(0, 0);
+    cv::Point pt2(width, actual_y);
+    cv::rectangle(image, pt1, pt2, color, thickness, cv::LINE_8, 0);
+}
+
+
 int main (int argc, char **argv) {
 
 	ros::init(argc, argv, "frontcamera");
@@ -76,7 +106,6 @@ int main (int argc, char **argv) {
 
 	std::string output_filename;
 	bool record_video_flag = false;
-	int recording_fps;
 	#ifdef RECORD_VIDEO
 		record_video_flag = true;
 		output_filename = "/home/aizer/Documents/RCJ_SOCCER_OPEN_2025/jetson/catkin_ws/src/robocup2024/out/frontcamera_out_";
@@ -89,7 +118,7 @@ int main (int argc, char **argv) {
 	#endif
 
 	Gstreamer gstreamer;
-	gstreamer.set_sensor_id(1);
+	gstreamer.set_sensor_id(0);
 	gstreamer.set_framerate(FRAME_RATE);
 	gstreamer.set_width(WIDTH);
 	gstreamer.set_height(HEIGHT);
@@ -117,7 +146,7 @@ int main (int argc, char **argv) {
 
 	if (record_video_flag) {
 		int codec = cv::VideoWriter::fourcc('M', 'P', '4', 'V');
-		video_writer.open(output_filename, codec, recording_fps, frame_size, true);
+		video_writer.open(output_filename, codec, FRAME_RATE, frame_size, true);
 
 		if (!video_writer.isOpened()) {
 			ROS_ERROR("Could not open the output video file for write: %s", output_filename.c_str());
@@ -130,7 +159,7 @@ int main (int argc, char **argv) {
 	}
 
 	BlobDetection ballDetection;
-	ballDetection.set_color_range(cv::Scalar(0, 5, 97), cv::Scalar(24, 56, 208));
+	ballDetection.set_color_range(cv::Scalar(0, 191, 156), cv::Scalar(43, 255, 199));
 	ballDetection.set_area(50, 100000);
 
 	unsigned long long ms_count = 0;
@@ -143,10 +172,8 @@ int main (int argc, char **argv) {
 		if (frame_cpu.empty()) continue;
 
 		preprocessing::resize(frame_cpu, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-		preprocessing::contrast(frame_cpu, 1.2, 2.3);
-		preprocessing::gamma_correction(frame_cpu, 1.9);
-		preprocessing::brightness(frame_cpu, 1.4);
 		preprocessing::saturation(frame_cpu, 2);
+		drawIgnoreArea(frame_cpu, IGNORE_BEFORE_Y);
 
 		std::vector<BlobDetection::Blob> ballBlobs = ballDetection.detect(frame_cpu);
 		BlobDetection::plot_blobs(frame_cpu, ballBlobs, cv::Scalar(255, 255, 255));
@@ -189,7 +216,10 @@ int main (int argc, char **argv) {
 		#endif
 
 		#ifdef SHOW_IMAGE
-			cv::imshow("Front-Camera", frame_cpu);
+			const std::string window_name = "Front-Camera";
+			cv::namedWindow(window_name);
+			cv::setMouseCallback(window_name, on_mouse, nullptr);
+			cv::imshow(window_name, frame_cpu);
 			if (cv::waitKey(1) == KEY_ESC) {
 				break;
 			}

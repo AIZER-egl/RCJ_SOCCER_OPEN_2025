@@ -21,17 +21,17 @@
 #define PI 3.1415926
 #define EULER 2.71828
 
-#define SHOW_IMAGE
-//#define RECORD_VIDEO
+//#define SHOW_IMAGE
+#define RECORD_VIDEO
 
 #define DISPLAY_HEIGHT 473
 #define DISPLAY_WIDTH 768
 
-#define ROBOT_ORIGIN_X 368
-#define ROBOT_ORIGIN_Y 275
+#define ROBOT_ORIGIN_X 397
+#define ROBOT_ORIGIN_Y 216
 
 #define INVALID_VALUE 999
-#define FRAME_RATE 20
+#define FRAME_RATE 14
 
 void on_mouse (int event, int x, int y, int flags, void* userdata) {
 	(void)userdata;
@@ -59,29 +59,8 @@ long long getMillis() {
 	return millis_count;
 }
 
-int get_quadrant (float x, float y) {
-	if (x > 0 && y > 0) return 1;
-	if (x < 0 && y > 0) return 2;
-	if (x < 0 && y < 0) return 3;
-	return 4;
-}
-
 float get_angle (float x, float y) {
-	int quadrant = get_quadrant(x, y);
-	float angle = 0;
-
-	switch (quadrant) {
-		case 1:	angle = std::abs(atan(y / x) * 180 / PI); break;
-		case 2:	angle = 180 - std::abs(atan(y / x) * 180 / PI); break;
-		case 3:	angle = 180 + std::abs(atan(y / x) * 180 / PI); break;
-		case 4:	angle = 360 - std::abs(atan(y / x) * 180 / PI); break;
-	}
-
-	angle -= 90;
-	if (angle < 0) angle += 360;
-
-	if (angle > 180) angle -= 360;
-	return angle;
+	return std::atan2(x, y) * 180 / PI;
 }
 
 void applyCircularMask(const cv::Mat& frame, int center_x, int center_y, cv::Mat& output_frame, bool modify_inplace = false) {
@@ -119,7 +98,7 @@ int main (int argc, char **argv) {
 
 	ROS_INFO("Using OPENCV version %s", CV_VERSION);
 
-	#ifdef SHOW_IMAGE
+	#ifdef SHOW_IMAGErecording_fps
 		ROS_INFO("Show image ENABLED via compile-time define.");
 	#else
 		ROS_INFO("Show image DISABLED via compile-time define.");
@@ -127,7 +106,6 @@ int main (int argc, char **argv) {
 
 	std::string output_filename;
 	bool record_video_flag = false;
-	int recording_fps;
 	#ifdef RECORD_VIDEO
 		record_video_flag = true;
 		output_filename = "/home/aizer/Documents/RCJ_SOCCER_OPEN_2025/jetson/catkin_ws/src/robocup2024/out/omnicamera_out_";
@@ -140,7 +118,7 @@ int main (int argc, char **argv) {
 	#endif
 
 	Gstreamer gstreamer;
-	gstreamer.set_sensor_id(0);
+	gstreamer.set_sensor_id(1);
 	gstreamer.set_framerate(FRAME_RATE);
 	gstreamer.set_width(WIDTH);
 	gstreamer.set_height(HEIGHT);
@@ -168,7 +146,7 @@ int main (int argc, char **argv) {
 
 	if (record_video_flag) {
 		int codec = cv::VideoWriter::fourcc('M', 'P', '4', 'V');
-		video_writer.open(output_filename, codec, recording_fps, frame_size, true);
+		video_writer.open(output_filename, codec, FRAME_RATE, frame_size, true);
 
 		if (!video_writer.isOpened()) {
 			ROS_ERROR("Could not open the output video file for write: %s", output_filename.c_str());
@@ -181,7 +159,7 @@ int main (int argc, char **argv) {
 	}
 
 	BlobDetection ballDetection;
-	ballDetection.set_color_range(cv::Scalar(0, 200, 120), cv::Scalar(171, 255, 219));
+	ballDetection.set_color_range(cv::Scalar(0, 132, 145), cv::Scalar(13, 221, 203));
 	ballDetection.set_area(7, 100000);
 
 	float ball_angle = 0;
@@ -193,11 +171,7 @@ int main (int argc, char **argv) {
 		if (frame_cpu.empty()) continue;
 
 		preprocessing::resize(frame_cpu, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-		preprocessing::contrast(frame_cpu, 1.4, 2.5);
-		preprocessing::gamma_correction(frame_cpu, 1.9);
-		preprocessing::brightness(frame_cpu, 1.4);
 		preprocessing::saturation(frame_cpu, 2);
-		cv::flip(frame_cpu, frame_cpu, 0);
 
 		applyCircularMask(frame_cpu, ROBOT_ORIGIN_X, ROBOT_ORIGIN_Y, frame_cpu, true);
 
