@@ -11,17 +11,17 @@ unsigned long long previous_pulses_NE_timestamp;
 unsigned long long previous_pulses_NW_timestamp;
 
 Motor::Motor() : dataPtr(nullptr) {
-	motorSE.pwm_pin = MOTOR_SE_PWM;
-	motorSE.dir_pin = MOTOR_SE_DIR;
+	motorSE.pwm_1_pin = MOTOR_SE_PWM_1;
+	motorSE.pwm_2_pin = MOTOR_SE_PWM_2;
 
-	motorSW.pwm_pin = MOTOR_SW_PWM;
-	motorSW.dir_pin = MOTOR_SW_DIR;
+	motorSW.pwm_1_pin = MOTOR_SW_PWM_1;
+	motorSW.pwm_2_pin = MOTOR_SW_PWM_2;
 
-	motorNE.pwm_pin = MOTOR_NE_PWM;
-	motorNE.dir_pin = MOTOR_NE_DIR;
+	motorNE.pwm_1_pin = MOTOR_NE_PWM_1;
+	motorNE.pwm_2_pin = MOTOR_NE_PWM_2;
 
-	motorNW.pwm_pin = MOTOR_NW_PWM;
-	motorNW.dir_pin = MOTOR_NW_DIR;
+	motorNW.pwm_1_pin = MOTOR_NW_PWM_1;
+	motorNW.pwm_2_pin = MOTOR_NW_PWM_2;
 };
 
 void Motor::begin (BinarySerializationData& data) {
@@ -32,14 +32,14 @@ void Motor::begin (BinarySerializationData& data) {
 	motorSE.id = MOTOR_SE;
 	motorSW.id = MOTOR_SW;
 
-	pinMode(MOTOR_NE_DIR, OUTPUT);
-	pinMode(MOTOR_NE_PWM, OUTPUT_PWM);
-	pinMode(MOTOR_NW_DIR, OUTPUT);
-	pinMode(MOTOR_NW_PWM, OUTPUT_PWM);
-	pinMode(MOTOR_SE_DIR, OUTPUT);
-	pinMode(MOTOR_SE_PWM, OUTPUT_PWM);
-	pinMode(MOTOR_SW_DIR, OUTPUT);
-	pinMode(MOTOR_SW_PWM, OUTPUT_PWM);
+	pinMode(MOTOR_NE_PWM_1, OUTPUT_PWM);
+	pinMode(MOTOR_NE_PWM_2, OUTPUT_PWM);
+	pinMode(MOTOR_NW_PWM_1, OUTPUT_PWM);
+	pinMode(MOTOR_NW_PWM_2, OUTPUT_PWM);
+	pinMode(MOTOR_SE_PWM_1, OUTPUT_PWM);
+	pinMode(MOTOR_SE_PWM_2, OUTPUT_PWM);
+	pinMode(MOTOR_SW_PWM_1, OUTPUT_PWM);
+	pinMode(MOTOR_SW_PWM_2, OUTPUT_PWM);
 
 	interrupts(
 		std::vector<uint8_t> { MOTOR_NE_ENC_B, MOTOR_NW_ENC_B, MOTOR_SW_ENC_B, MOTOR_SE_ENC_B },
@@ -121,8 +121,13 @@ void Motor::individualMotor::setSpeed(int16_t new_speed, bool save_direction) {
 		}
 	}
 
-	analogWrite(pwm_pin, std::abs(new_speed));
-	digitalWrite(dir_pin, new_speed > 0);
+	if (new_speed > 0) {
+		analogWrite(pwm_1_pin, std::abs(new_speed));
+		analogWrite(pwm_2_pin, 0);
+	} else {
+		analogWrite(pwm_1_pin, 0);
+		analogWrite(pwm_2_pin, std::abs(new_speed));
+	}
 
 	if (save_direction) {
 		speed = std::abs(new_speed);
@@ -178,23 +183,27 @@ double Motor::individualMotor::getRPS_average() {
 }
 
 void Motor::stop() {
-	if (motorSE.rps == 0 && motorSW.rps == 0 && motorNE.rps == 0 && motorNW.rps == 0) return;
-
 	if (!robot_stopped) robot_stopped = true;
 	dataPtr -> robot_speed = 0;
 	dataPtr -> robot_direction = 0;
 
-	if (motorSE.speed != 0) motorSE.setSpeed(-MAX_SPEED * motorSE.speed / std::abs(motorSE.speed), false);
-	if (motorSW.speed != 0) motorSW.setSpeed(-MAX_SPEED * motorSW.speed / std::abs(motorSW.speed), false);
-	if (motorNE.speed != 0) motorNE.setSpeed(-MAX_SPEED * motorNE.speed / std::abs(motorNE.speed), false);
-	if (motorNW.speed != 0) motorNW.setSpeed(-MAX_SPEED * motorNW.speed / std::abs(motorNW.speed), false);
+	analogWrite(MOTOR_SW_PWM_1, MAX_SPEED);
+	analogWrite(MOTOR_SW_PWM_2, MAX_SPEED);
+	analogWrite(MOTOR_SE_PWM_1, MAX_SPEED);
+	analogWrite(MOTOR_SE_PWM_2, MAX_SPEED);
+	analogWrite(MOTOR_NW_PWM_1, MAX_SPEED);
+	analogWrite(MOTOR_NW_PWM_2, MAX_SPEED);
+	analogWrite(MOTOR_NE_PWM_1, MAX_SPEED);
+	analogWrite(MOTOR_NE_PWM_2, MAX_SPEED);
 
-	std::cout << "se rps" << motorSE.rps << std::endl;
-	if (motorSE.rps < 1.5 || motorSE.rps > (motorSE.previous_rps + 0.2)) motorSE.setSpeed(0);
-	if (motorSW.rps < 1.5 || motorSW.rps > (motorSW.previous_rps + 0.2)) motorSW.setSpeed(0);
-	if (motorNE.rps < 1.5 || motorNE.rps > (motorNE.previous_rps + 0.2)) motorNE.setSpeed(0);
-	if (motorNW.rps < 1.5 || motorNW.rps > (motorNW.previous_rps + 0.2)) motorNW.setSpeed(0);
-
+	// analogWrite(MOTOR_SW_PWM_1, MAX_SPEED);
+	// analogWrite(MOTOR_SW_PWM_2, MAX_SPEED);
+	// analogWrite(MOTOR_SE_PWM_1, MAX_SPEED);
+	// analogWrite(MOTOR_SE_PWM_2, MAX_SPEED);
+	// analogWrite(MOTOR_NW_PWM_1, MAX_SPEED);
+	// analogWrite(MOTOR_NW_PWM_2, MAX_SPEED);
+	// analogWrite(MOTOR_NE_PWM_1, MAX_SPEED);
+	// analogWrite(MOTOR_NE_PWM_2, MAX_SPEED);
 	// robot_stopped flag is automatically set to false when move method is called
 }
 

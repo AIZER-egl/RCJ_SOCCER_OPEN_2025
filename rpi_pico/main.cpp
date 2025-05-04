@@ -180,7 +180,8 @@ int main () {
 				// 	" SE: " << motor.motorSE.getRPS_average() << std::endl;
 
 				motor.move(
-					static_cast<float>(data.robot_speed) / 10,
+					180,
+					// static_cast<float>(data.robot_speed) / 10,
 					data.robot_direction,
 					data.robot_facing,
 					data.compass_yaw
