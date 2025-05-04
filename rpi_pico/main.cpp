@@ -180,24 +180,23 @@ int main () {
 				// 	" SW: " << motor.motorSW.getRPS_average() <<
 				// 	" SE: " << motor.motorSE.getRPS_average() << std::endl;
 
-				std::cout << "i: " << i++ << " " <<
-					motor.motorNW.rps * motor.motorNW.direction << " " <<
-						motor.motorNW.rpsPID.output << " " <<
-							motor.motorNW.rpsPID.error << " " <<
-								motor.motorNW.rpsPID.integral_error << " " << motor.motorNW.rpsPID.target << std::endl;
+				// std::cout << "i: " << i++ << " " <<
+				// 	motor.motorNW.rps * motor.motorNW.direction << " " <<
+				// 		motor.motorNW.rpsPID.output << " " <<
+				// 			motor.motorNW.rpsPID.error << " " <<
+				// 				motor.motorNW.rpsPID.integral_error << " " << motor.motorNW.rpsPID.target << std::endl;
 
 				motor.move(
-					7,
-					// static_cast<float>(data.robot_speed) / 10,
-					data.robot_direction + (temporal_variable ? 180 : 0),
+					static_cast<float>(data.robot_speed) / 10,
+					data.robot_direction,
 					data.robot_facing,
 					data.compass_yaw
 				);
 
-				if (millis() - last_switch_time >= 5000) {
-					temporal_variable = !temporal_variable;
-					last_switch_time = millis();
-				}
+				// if (millis() - last_switch_time >= 5000) {
+				// 	temporal_variable = !temporal_variable;
+				// 	last_switch_time = millis();
+				// }
 			}
 
 			last_motor_time = millis();
