@@ -162,7 +162,7 @@ int main () {
 			last_led_time = millis();
 		}
 
-		if (millis() - last_kicker_time >= 25) {
+		if (millis() - last_kicker_time >= 10000) {
 			if (data.kicker_active) {
 				kicker.kick();
 			}
@@ -174,10 +174,10 @@ int main () {
 			if (data.robot_stop || robot_state == ROBOT_OFF) {
 				motor.stop();
 			} else {
-				// std::cout << "NE: " << motor.motorNE.getRPS_average() <<
-				// 	" NW: " << motor.motorNW.getRPS_average() <<
-				// 	" SW: " << motor.motorSW.getRPS_average() <<
-				// 	" SE: " << motor.motorSE.getRPS_average() << std::endl;
+				std::cout << "NE: " << motor.motorNE.getRPS_average() <<
+					" NW: " << motor.motorNW.getRPS_average() <<
+					" SW: " << motor.motorSW.getRPS_average() <<
+					" SE: " << motor.motorSE.getRPS_average() << std::endl;
 
 				motor.move(
 					static_cast<float>(data.robot_speed) / 10,
