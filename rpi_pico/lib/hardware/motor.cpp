@@ -56,36 +56,36 @@ void Motor::begin (BinarySerializationData& data) {
 	motorSE.rpsPID.one_direction_only = true;
 	motorSE.rpsPID.max_output = MAX_SPEED;
 	motorSE.rpsPID.error_threshold = 0.0;
-	motorSE.rpsPID.kp = 40;
-	motorSE.rpsPID.ki = 30;
-	motorSE.rpsPID.kd = 1;
+	motorSE.rpsPID.kp = 5;
+	motorSE.rpsPID.ki = 50;
+	motorSE.rpsPID.kd = 0;
 
 	motorSW.rpsPID.one_direction_only = true;
 	motorSW.rpsPID.max_output = MAX_SPEED;
 	motorSW.rpsPID.error_threshold = 0.0;
-	motorSW.rpsPID.kp = 40;
-	motorSW.rpsPID.ki = 30;
-	motorSW.rpsPID.kd = 1;
+	motorSW.rpsPID.kp = 5;
+	motorSW.rpsPID.ki = 50;
+	motorSW.rpsPID.kd = 0;
 
 	motorNW.rpsPID.one_direction_only = true;
 	motorNW.rpsPID.max_output = MAX_SPEED;
 	motorNW.rpsPID.error_threshold = 0.0;
-	motorNW.rpsPID.kp = 40;
-	motorNW.rpsPID.ki = 30;
-	motorNW.rpsPID.kd = 1;
+	motorNW.rpsPID.kp = 5;
+	motorNW.rpsPID.ki = 50;
+	motorNW.rpsPID.kd = 0;
 
 	motorNE.rpsPID.one_direction_only = true;
 	motorNE.rpsPID.max_output = MAX_SPEED;
 	motorNE.rpsPID.error_threshold = 0.0;
-	motorNE.rpsPID.kp = 51;
-	motorNE.rpsPID.ki = 36;
-	motorNE.rpsPID.kd = 1;
+	motorNE.rpsPID.kp = 5;
+	motorNE.rpsPID.ki = 50;
+	motorNE.rpsPID.kd = 0;
 
 	rotationPID.one_direction_only = false;
 	rotationPID.reset_within_threshold = true;
 	rotationPID.max_output = 1.5;
 	rotationPID.error_threshold = 8.0;
-	rotationPID.kp = 0.01;
+	rotationPID.kp = 0.015;
 	rotationPID.ki = 0.01;
 	rotationPID.kd = 0.0;
 }
@@ -189,7 +189,6 @@ void Motor::stop() {
 	if (motorNE.speed != 0) motorNE.setSpeed(-MAX_SPEED * motorNE.speed / std::abs(motorNE.speed), false);
 	if (motorNW.speed != 0) motorNW.setSpeed(-MAX_SPEED * motorNW.speed / std::abs(motorNW.speed), false);
 
-	std::cout << "se rps" << motorSE.rps << std::endl;
 	if (motorSE.rps < 1.5 || motorSE.rps > (motorSE.previous_rps + 0.2)) motorSE.setSpeed(0);
 	if (motorSW.rps < 1.5 || motorSW.rps > (motorSW.previous_rps + 0.2)) motorSW.setSpeed(0);
 	if (motorNE.rps < 1.5 || motorNE.rps > (motorNE.previous_rps + 0.2)) motorNE.setSpeed(0);
@@ -199,16 +198,18 @@ void Motor::stop() {
 }
 
 void Motor::individualMotor::move(const double new_rps) {
-	if (new_rps == 0) {
+	if (std::abs(new_rps) < 0.1 && rps < 0.5) {
 		setSpeed(0);
+		PID::reset(rpsPID);
 		return;
 	}
 
+	const double current_signed_rps = rps * static_cast<double>(direction);
+    rpsPID.error = new_rps - current_signed_rps;
+	rpsPID.target = new_rps;
+
 	if (new_rps > 0) rpsPID.accept_type = PID_ACCEPT_POSITIVES_ONLY;
 	else rpsPID.accept_type = PID_ACCEPT_NEGATIVES_ONLY;
-
-	rpsPID.error = (std::abs(new_rps) - rps) * (new_rps > 0 ? 1 : -1);
-	rpsPID.target = new_rps;
 
 	PID::compute(rpsPID);
 
@@ -239,8 +240,8 @@ void Motor::move(const float rps, const float direction, const float facing_targ
 	rotationPID.error = facing_target - facing_current;
 	PID::compute(rotationPID);
 
-	motorNW.move(NWSpeed + 0);
-	motorSW.move(SWSpeed - 0);
+	motorNW.move(NWSpeed + rotationPID.output);
+	motorSW.move(SWSpeed - rotationPID.output);
 	motorSE.move(SESpeed + rotationPID.output);
 	motorNE.move(NESpeed - rotationPID.output);
 }
