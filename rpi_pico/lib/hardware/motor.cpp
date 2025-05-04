@@ -121,7 +121,7 @@ void Motor::individualMotor::setSpeed(int16_t new_speed, bool save_direction) {
 		}
 	}
 
-	if (new_speed > 0) {
+	if (new_speed < 0) {
 		analogWrite(pwm_1_pin, std::abs(new_speed));
 		analogWrite(pwm_2_pin, 0);
 	} else {
@@ -195,15 +195,6 @@ void Motor::stop() {
 	analogWrite(MOTOR_NW_PWM_2, MAX_SPEED);
 	analogWrite(MOTOR_NE_PWM_1, MAX_SPEED);
 	analogWrite(MOTOR_NE_PWM_2, MAX_SPEED);
-
-	// analogWrite(MOTOR_SW_PWM_1, MAX_SPEED);
-	// analogWrite(MOTOR_SW_PWM_2, MAX_SPEED);
-	// analogWrite(MOTOR_SE_PWM_1, MAX_SPEED);
-	// analogWrite(MOTOR_SE_PWM_2, MAX_SPEED);
-	// analogWrite(MOTOR_NW_PWM_1, MAX_SPEED);
-	// analogWrite(MOTOR_NW_PWM_2, MAX_SPEED);
-	// analogWrite(MOTOR_NE_PWM_1, MAX_SPEED);
-	// analogWrite(MOTOR_NE_PWM_2, MAX_SPEED);
 	// robot_stopped flag is automatically set to false when move method is called
 }
 
