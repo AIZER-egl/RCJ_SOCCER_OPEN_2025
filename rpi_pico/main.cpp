@@ -65,6 +65,7 @@ int main () {
 	unsigned long long last_kicker_time = millis();
 	unsigned long long last_motor_time = millis();
 	unsigned long long last_led_time = millis();
+	unsigned long long last_switch_time = millis();
 	unsigned long led_rate = 500;
     bool previous_action_button_read = false;
     bool action_button_read = false;
@@ -89,8 +90,8 @@ int main () {
 	pinMode(BUILTIN_LED, OUTPUT);
 	digitalWrite(BUILTIN_LED, HIGH);
 
-	uint8_t i = 0;
-
+	unsigned long i = 0;
+	bool temporal_variable = false;
 	for (;;) {
 		bno.tick();
 		motor.tick();
@@ -179,12 +180,23 @@ int main () {
 					" SW: " << motor.motorSW.getRPS_average() <<
 					" SE: " << motor.motorSE.getRPS_average() << std::endl;
 
+				// std::cout << "i: " << i++ << " " <<
+				// 	motor.motorNW.rps * motor.motorNW.direction << " " <<
+				// 		motor.motorNW.rpsPID.output << " " <<
+				// 			motor.motorNW.rpsPID.error << " " <<
+				// 				motor.motorNW.rpsPID.integral_error << " " << motor.motorNW.rpsPID.target << std::endl;
+
 				motor.move(
 					static_cast<float>(data.robot_speed) / 10,
 					data.robot_direction,
 					data.robot_facing,
 					data.compass_yaw
 				);
+
+				// if (millis() - last_switch_time >= 5000) {
+				// 	temporal_variable = !temporal_variable;
+				// 	last_switch_time = millis();
+				// }
 			}
 
 			last_motor_time = millis();
