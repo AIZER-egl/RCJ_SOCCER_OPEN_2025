@@ -9,6 +9,7 @@
 #include <chrono>
 #include <mutex>
 #include <atomic>
+#include <algorithm>
 
 #include "binarySerializationData.h"
 #include "serializer.h"
@@ -108,15 +109,22 @@ void controlLoopCallback(const ros::TimerEvent& event) {
 			data.robot_stop = true;
 			first_front_camera_detection = false;
 		} else {
+			float speed_offset = std::max(-2/3 * static_cast<float>(front_distance) + 20.0, 0.0);
+
 			data.robot_stop = false;
 			data.robot_direction = static_cast<int16_t>(front_angle * 1.3);
-			data.robot_speed = 70;
+			data.robot_speed = 40 - static_cast<int>(speed_offset);
 			data.robot_facing = 0;
 		}
 	} else if (omni_angle != INVALID_VALUE) {
+		int speed_offset = -1/18 * std::abs(omni_angle) + 15;
+		// y = -1/18 x + 15
+		// 180 -> 0
+		// 0 -> 15
+
 		data.robot_stop = false;
 		data.robot_direction = static_cast<int16_t>(omni_angle + (60.0 * signOf(static_cast<float>(data.robot_direction))));
-		data.robot_speed = 60;
+		data.robot_speed = 45 - speed_offset;
 		data.robot_facing = 0;
 	} else {
 		data.robot_stop = false;

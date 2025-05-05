@@ -159,7 +159,7 @@ int main (int argc, char **argv) {
 	}
 
 	BlobDetection ballDetection;
-	ballDetection.set_color_range(cv::Scalar(0, 191, 156), cv::Scalar(43, 255, 199));
+	ballDetection.set_color_range(cv::Scalar(0, 143, 128), cv::Scalar(14, 215, 191));
 	ballDetection.set_area(50, 100000);
 
 	unsigned long long ms_count = 0;
