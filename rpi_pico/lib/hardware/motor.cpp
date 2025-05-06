@@ -11,17 +11,21 @@ unsigned long long previous_pulses_NE_timestamp;
 unsigned long long previous_pulses_NW_timestamp;
 
 Motor::Motor() : dataPtr(nullptr) {
-	motorSE.pwm_1_pin = MOTOR_SE_PWM_1;
-	motorSE.pwm_2_pin = MOTOR_SE_PWM_2;
+		motorSE.pwm_pin = MOTOR_SE_PWM;
+		motorSE.dir_pin = MOTOR_SE_DIR;
+		motorSE.encoder_b_pin = MOTOR_SE_ENC_B;
 
-	motorSW.pwm_1_pin = MOTOR_SW_PWM_1;
-	motorSW.pwm_2_pin = MOTOR_SW_PWM_2;
+		motorSW.pwm_pin = MOTOR_SW_PWM;
+		motorSW.dir_pin = MOTOR_SW_DIR;
+		motorSW.encoder_b_pin = MOTOR_SW_ENC_B;
 
-	motorNE.pwm_1_pin = MOTOR_NE_PWM_1;
-	motorNE.pwm_2_pin = MOTOR_NE_PWM_2;
+		motorNE.pwm_pin = MOTOR_NE_PWM;
+		motorNE.dir_pin = MOTOR_NE_DIR;
+		motorNE.encoder_b_pin = MOTOR_NE_ENC_B;
 
-	motorNW.pwm_1_pin = MOTOR_NW_PWM_1;
-	motorNW.pwm_2_pin = MOTOR_NW_PWM_2;
+		motorNW.pwm_pin = MOTOR_NW_PWM;
+		motorNW.dir_pin = MOTOR_NW_DIR;
+		motorNW.encoder_b_pin = MOTOR_NW_ENC_B;
 };
 
 void Motor::begin (BinarySerializationData& data) {
@@ -32,17 +36,17 @@ void Motor::begin (BinarySerializationData& data) {
 	motorSE.id = MOTOR_SE;
 	motorSW.id = MOTOR_SW;
 
-	pinMode(MOTOR_NE_PWM_1, OUTPUT_PWM);
-	pinMode(MOTOR_NE_PWM_2, OUTPUT_PWM);
-	pinMode(MOTOR_NW_PWM_1, OUTPUT_PWM);
-	pinMode(MOTOR_NW_PWM_2, OUTPUT_PWM);
-	pinMode(MOTOR_SE_PWM_1, OUTPUT_PWM);
-	pinMode(MOTOR_SE_PWM_2, OUTPUT_PWM);
-	pinMode(MOTOR_SW_PWM_1, OUTPUT_PWM);
-	pinMode(MOTOR_SW_PWM_2, OUTPUT_PWM);
+	pinMode(motorNE.dir_pin, OUTPUT);
+	pinMode(motorNE.pwm_pin, OUTPUT_PWM);
+	pinMode(motorNW.dir_pin, OUTPUT);
+	pinMode(motorNW.pwm_pin, OUTPUT_PWM);
+	pinMode(motorSE.dir_pin, OUTPUT);
+	pinMode(motorSE.pwm_pin, OUTPUT_PWM);
+	pinMode(motorSW.dir_pin, OUTPUT);
+	pinMode(motorSW.pwm_pin, OUTPUT_PWM);
 
 	interrupts(
-		std::vector<uint8_t> { MOTOR_NE_ENC_B, MOTOR_NW_ENC_B, MOTOR_SW_ENC_B, MOTOR_SE_ENC_B },
+		std::vector<uint8_t> { motorNE.encoder_b_pin, motorNW.encoder_b_pin, motorSW.encoder_b_pin, motorSE.encoder_b_pin },
 		[] (const unsigned int gpio, const unsigned long events) {
 			Motor::individualMotor::callback(gpio, events);
 		}
@@ -121,17 +125,15 @@ void Motor::individualMotor::setSpeed(int16_t new_speed, bool save_direction) {
 		}
 	}
 
-	if (new_speed < 0) {
-		analogWrite(pwm_1_pin, std::abs(new_speed));
-		analogWrite(pwm_2_pin, 0);
-	} else {
-		analogWrite(pwm_1_pin, 0);
-		analogWrite(pwm_2_pin, std::abs(new_speed));
-	}
+	analogWrite(pwm_pin, std::abs(new_speed));
+	digitalWrite(dir_pin, new_speed > 0);
+
 
 	if (save_direction) {
 		speed = std::abs(new_speed);
-		direction = new_speed > 0 ? 1 : -1;
+		if (new_speed != 0) direction = new_speed > 0 ? 1 : -1;
+		// If direction is equal to 0, direction will remain unchanged
+		// (asumming a PID controller is probably doing some things with speed 0 to keep things working well)
 	}
 }
 
@@ -183,6 +185,8 @@ double Motor::individualMotor::getRPS_average() {
 }
 
 void Motor::stop() {
+	if (motorSE.rps == 0 && motorSW.rps == 0 && motorNE.rps == 0 && motorNW.rps == 0) return;
+
 	if (!robot_stopped) robot_stopped = true;
 	dataPtr -> robot_speed = 0;
 	dataPtr -> robot_direction = 0;
@@ -197,13 +201,17 @@ void Motor::stop() {
 	if (motorNE.rps < 1.5 || motorNE.rps > (motorNE.previous_rps + 0.2)) motorNE.setSpeed(0);
 	if (motorNW.rps < 1.5 || motorNW.rps > (motorNW.previous_rps + 0.2)) motorNW.setSpeed(0);
 
+	PID::reset(motorNW.rpsPID);
+	PID::reset(motorSW.rpsPID);
+	PID::reset(motorNE.rpsPID);
+	PID::reset(motorSE.rpsPID);
+
 	// robot_stopped flag is automatically set to false when move method is called
 }
 
 void Motor::individualMotor::move(const double new_rps) {
-	if (std::abs(new_rps) < 0.1 && rps < 0.5) {
+	if (std::abs(new_rps) < 0.1) {
 		setSpeed(0);
-		PID::reset(rpsPID);
 		return;
 	}
 

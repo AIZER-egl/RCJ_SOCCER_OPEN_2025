@@ -10,23 +10,23 @@
 #include "../../pico-lib/gpio.h"
 #include "../software/binarySerializationData.h"
 
-#define MOTOR_NE_PWM_1 12
-#define MOTOR_NE_PWM_2 13
+#define MOTOR_NE_DIR 12
+#define MOTOR_NE_PWM 13
 #define MOTOR_NE_ENC_A 6
 #define MOTOR_NE_ENC_B 7
 
-#define MOTOR_SE_PWM_1 8
-#define MOTOR_SE_PWM_2 9
+#define MOTOR_SE_DIR 8
+#define MOTOR_SE_PWM 9
 #define MOTOR_SE_ENC_A 21
 #define MOTOR_SE_ENC_B 20
 
-#define MOTOR_SW_PWM_1 2
-#define MOTOR_SW_PWM_2 3
+#define MOTOR_SW_DIR 2
+#define MOTOR_SW_PWM 3
 #define MOTOR_SW_ENC_A 11 // Encoder A and Encoder B are switched because Robot 1 Encoder B is failing
 #define MOTOR_SW_ENC_B 10
 
-#define MOTOR_NW_PWM_1 26
-#define MOTOR_NW_PWM_2 22
+#define MOTOR_NW_DIR 26
+#define MOTOR_NW_PWM 22
 #define MOTOR_NW_ENC_A 14
 #define MOTOR_NW_ENC_B 15
 
@@ -68,8 +68,9 @@ public:
 
 		PID::PidParameters rpsPID;
 
-		int pwm_1_pin{};
-		int pwm_2_pin{};
+		int pwm_pin{};
+		int dir_pin{};
+		uint8_t encoder_b_pin{};
 
 		double rps_summatory = 0;
 		unsigned long long rps_count = 0;

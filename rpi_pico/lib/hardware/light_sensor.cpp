@@ -42,42 +42,39 @@ uint16_t Light_Sensor::getValue(uint8_t channel) {
 }
 
 void Light_Sensor::tick() {
-	unsigned long long timestamp_ms = time_us_64() / 1000;
-	if (timestamp_ms - previous_read >= 1) {
+	unsigned long long timestamp_us = time_us_64();
+	if (timestamp_us - previous_read >= 1000) {
+		uint8_t channel_just_read = current_channel;
 		uint16_t value = getValue(current_channel);
-		switch (current_channel) {
-			case 0: ldr_0 = value; break;
-			case 1: ldr_1 = value; break;
-			case 2: ldr_2 = value; break;
-			case 3: ldr_3 = value; break;
-			case 4: ldr_4 = value; break;
-			case 5: ldr_5 = value; break;
-			case 6: ldr_6 = value; break;
-			case 7: ldr_7 = value; break;
-			default: break;
+
+		if (channel_just_read < NUM_LDR_SENSORS) {
+			ldr_readings[channel_just_read] = value;
+
+			if (value > ldr_thresholds[channel_just_read]) {
+				detection_active = true;
+			}
 		}
 
 		current_channel++;
-		if (current_channel > 7) current_channel = 0;
-		previous_read = time_us_64() / 1000;
+		if (current_channel >= NUM_LDR_SENSORS) {
+			current_channel = 0;
+		}
+
+		previous_read = timestamp_us;
 	}
 
-	if (timestamp_ms - previos_data_update >= 30) {
-		dataPtr -> ldr_value = static_cast<int16_t>(ldr_0);
-		previos_data_update = time_us_64() / 1000;
+	if (timestamp_us - previos_data_update >= 30000) {
+		dataPtr -> ldr_value = static_cast<int16_t>(ldr_readings[0]);
+		previos_data_update = time_us_64();
 	}
-	// 	switch (dataPtr->ldr_channel) {
-	// 		case 0:	dataPtr->ldr_value = static_cast<int16_t>(ldr_0); break;
-	// 		case 1:	dataPtr->ldr_value = static_cast<int16_t>(ldr_1); break;
-	// 		case 2:	dataPtr->ldr_value = static_cast<int16_t>(ldr_2); break;
-	// 		case 3:	dataPtr->ldr_value = static_cast<int16_t>(ldr_3); break;
-	// 		case 4:	dataPtr->ldr_value = static_cast<int16_t>(ldr_4); break;
-	// 		case 5:	dataPtr->ldr_value = static_cast<int16_t>(ldr_5); break;
-	// 		case 6:	dataPtr->ldr_value = static_cast<int16_t>(ldr_6); break;
-	// 		case 7:	dataPtr->ldr_value = static_cast<int16_t>(ldr_7); break;
-	// 		default: dataPtr->ldr_value = 0; break;
-	// 	}
-	//
-	// 	previos_data_update = time_us_64() / 1000;
-	// }
+}
+
+void Light_Sensor::calibrate() {
+	for (uint8_t i = 0; i < NUM_LDR_SENSORS; ++i) {
+		uint16_t current_value = getValue(i);
+		uint32_t threshold_temp = static_cast<uint32_t>(current_value) + CALIBRATION_OFFSET;
+		ldr_thresholds[i] = (threshold_temp > UINT16_MAX) ? UINT16_MAX : static_cast<uint16_t>(threshold_temp);
+	}
+
+	detection_active = false;
 }
