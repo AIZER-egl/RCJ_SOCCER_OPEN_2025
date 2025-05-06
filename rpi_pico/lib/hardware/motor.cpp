@@ -11,21 +11,40 @@ unsigned long long previous_pulses_NE_timestamp;
 unsigned long long previous_pulses_NW_timestamp;
 
 Motor::Motor() : dataPtr(nullptr) {
-		motorSE.pwm_pin = MOTOR_SE_PWM;
-		motorSE.dir_pin = MOTOR_SE_DIR;
-		motorSE.encoder_b_pin = MOTOR_SE_ENC_B;
+#ifdef ROBOT_1
+		motorSE.pwm_pin = R1_MOTOR_SE_PWM;
+		motorSE.dir_pin = R1_MOTOR_SE_DIR;
+		motorSE.encoder_b_pin = R1_MOTOR_SE_ENC_B;
 
-		motorSW.pwm_pin = MOTOR_SW_PWM;
-		motorSW.dir_pin = MOTOR_SW_DIR;
-		motorSW.encoder_b_pin = MOTOR_SW_ENC_B;
+		motorSW.pwm_pin = R1_MOTOR_SW_PWM;
+		motorSW.dir_pin = R1_MOTOR_SW_DIR;
+		motorSW.encoder_b_pin = R1_MOTOR_SW_ENC_B;
 
-		motorNE.pwm_pin = MOTOR_NE_PWM;
-		motorNE.dir_pin = MOTOR_NE_DIR;
-		motorNE.encoder_b_pin = MOTOR_NE_ENC_B;
+		motorNE.pwm_pin = R1_MOTOR_NE_PWM;
+		motorNE.dir_pin = R1_MOTOR_NE_DIR;
+		motorNE.encoder_b_pin = R1_MOTOR_NE_ENC_B;
 
-		motorNW.pwm_pin = MOTOR_NW_PWM;
-		motorNW.dir_pin = MOTOR_NW_DIR;
-		motorNW.encoder_b_pin = MOTOR_NW_ENC_B;
+		motorNW.pwm_pin = R1_MOTOR_NW_PWM;
+		motorNW.dir_pin = R1_MOTOR_NW_DIR;
+		motorNW.encoder_b_pin = R1_MOTOR_NW_ENC_B;
+#endif
+#ifdef ROBOT_2
+		motorSE.pwm_pin = R2_MOTOR_SE_PWM;
+		motorSE.dir_pin = R2_MOTOR_SE_DIR;
+		motorSE.encoder_b_pin = R2_MOTOR_SE_ENC_B;
+
+		motorSW.pwm_pin = R2_MOTOR_SW_PWM;
+		motorSW.dir_pin = R2_MOTOR_SW_DIR;
+		motorSW.encoder_b_pin = R2_MOTOR_SW_ENC_B;
+
+		motorNE.pwm_pin = R2_MOTOR_NE_PWM;
+		motorNE.dir_pin = R2_MOTOR_NE_DIR;
+		motorNE.encoder_b_pin = R2_MOTOR_NE_ENC_B;
+
+		motorNW.pwm_pin = R2_MOTOR_NW_PWM;
+		motorNW.dir_pin = R2_MOTOR_NW_DIR;
+		motorNW.encoder_b_pin = R2_MOTOR_NW_ENC_B;
+#endif
 };
 
 void Motor::begin (BinarySerializationData& data) {
@@ -126,8 +145,15 @@ void Motor::individualMotor::setSpeed(int16_t new_speed, bool save_direction) {
 	}
 
 	analogWrite(pwm_pin, std::abs(new_speed));
-	digitalWrite(dir_pin, new_speed > 0);
 
+#ifdef ROBOT_1
+	digitalWrite(dir_pin, new_speed > 0);
+#endif
+#ifdef ROBOT_2
+	// Because of an error when setting up the second robot
+	// the motor cables were mixed and now the logic is inverted
+	digitalWrite(dir_pin, new_speed < 0);
+#endif
 
 	if (save_direction) {
 		speed = std::abs(new_speed);
@@ -171,10 +197,18 @@ void Motor::individualMotor::getRPS() {
 
 void Motor::individualMotor::callback(const unsigned int gpio, unsigned long events) {
 	switch (gpio) {
-		case MOTOR_SE_ENC_B: pulses_SE++; break;
-		case MOTOR_SW_ENC_B: pulses_SW++; break;
-		case MOTOR_NE_ENC_B: pulses_NE++; break;
-		case MOTOR_NW_ENC_B: pulses_NW++; break;
+#ifdef ROBOT_1
+		case R1_MOTOR_SE_ENC_B: pulses_SE++; break;
+		case R1_MOTOR_SW_ENC_B: pulses_SW++; break;
+		case R1_MOTOR_NE_ENC_B: pulses_NE++; break;
+		case R1_MOTOR_NW_ENC_B: pulses_NW++; break;
+#endif
+#ifdef ROBOT_2
+		case R2_MOTOR_SE_ENC_B: pulses_SE++; break;
+		case R2_MOTOR_SW_ENC_B: pulses_SW++; break;
+		case R2_MOTOR_NE_ENC_B: pulses_NE++; break;
+		case R2_MOTOR_NW_ENC_B: pulses_NW++; break;
+#endif
 		default: break;
 	}
 }

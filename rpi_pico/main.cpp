@@ -186,10 +186,10 @@ int main () {
 			if (data.robot_stop || robot_state == ROBOT_OFF) {
 				motor.stop();
 			} else {
-				std::cout << "NE: " << motor.motorNE.rps <<
-					" NW: " << motor.motorNW.rps <<
-					" SW: " << motor.motorSW.rps <<
-					" SE: " << motor.motorSE.rps << std::endl;
+				// std::cout << "NE: " << motor.motorNE.rps <<
+				// 	" NW: " << motor.motorNW.rps <<
+				// 	" SW: " << motor.motorSW.rps <<
+				// 	" SE: " << motor.motorSE.rps << std::endl;
 
 				// std::cout << "i: " << i++ << " " <<
 				// 	motor.motorNE.rps * motor.motorNE.direction << " " <<
