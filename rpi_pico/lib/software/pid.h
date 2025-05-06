@@ -12,7 +12,7 @@
 
 class PID {
 public:
-    struct  PidParameters {
+    struct PidParameters {
         float kp{};
         float ki{};
         float kd{};

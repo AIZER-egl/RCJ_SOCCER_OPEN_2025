@@ -30,9 +30,8 @@
 #define ROBOT_ON true
 #define ROBOT_OFF false
 
-bool disabled = false;
 std::vector<uint8_t> message = {};
-int ldr_3_threshold = 1024;
+constexpr float SPEED_SCALE_FACTOR = 10.0;
 
 void sendData(BinarySerializationData& data) {
 	std::vector<uint8_t> bytes = Serializer::serialize(data);
@@ -98,9 +97,20 @@ int main () {
 		kicker.tick();
 		light_sensor.tick();
 
-		action_button_read = digitalRead(ACTION_BUTTON);
+		if (light_sensor.detection_active) {
+			if (robot_state == ROBOT_ON) {
+				motor.move(
+					MAX_RPS,
+					motor.current_direction - 180,
+					data.robot_facing,
+					data.compass_yaw,
+					false
+					);
+			}
+			light_sensor.detection_active = false;
+		}
 
-		if (ldr_3_threshold < light_sensor.ldr_3) {}
+		action_button_read = digitalRead(ACTION_BUTTON);
 
 		int received_char;
 		while ((received_char = getchar_timeout_us(0)) != PICO_ERROR_TIMEOUT) {
@@ -126,7 +136,7 @@ int main () {
 			}
 		}
 
-		if (action_button_read && !previous_action_button_read) {
+		if (action_button_read && !previous_action_button_read && (millis() - last_switch_time >= 1000)) {
 			if (robot_state == ROBOT_OFF) {
 				PID::reset(motor.motorSE.rpsPID);
 				PID::reset(motor.motorSW.rpsPID);
@@ -135,7 +145,6 @@ int main () {
 				PID::reset(motor.rotationPID);
 				robot_state = ROBOT_ON;
 				led_rate = 100;
-				// kicker.kick();
 				bno.setYawOffset(bno.raw_yaw);
 				motor.motorSE.setSpeed(0);
 				motor.motorSW.setSpeed(0);
@@ -149,12 +158,14 @@ int main () {
 				motor.motorNE.rps_summatory = 0;
 				motor.motorNW.rps_count = 0;
 				motor.motorNW.rps_summatory = 0;
-				ldr_3_threshold = light_sensor.ldr_3 + 40;
+				light_sensor.calibrate();
 			} else {
 				motor.stop();
+				kicker.kick();
 				led_rate = 500;
 				robot_state = ROBOT_OFF;
 			}
+			last_switch_time = millis();
 		}
 
 		if (millis() - last_led_time >= led_rate) {
@@ -163,7 +174,7 @@ int main () {
 			last_led_time = millis();
 		}
 
-		if (millis() - last_kicker_time >= 10000) {
+		if (millis() - last_kicker_time >= 25) {
 			if (data.kicker_active) {
 				kicker.kick();
 			}
@@ -175,28 +186,32 @@ int main () {
 			if (data.robot_stop || robot_state == ROBOT_OFF) {
 				motor.stop();
 			} else {
-				std::cout << "NE: " << motor.motorNE.getRPS_average() <<
-					" NW: " << motor.motorNW.getRPS_average() <<
-					" SW: " << motor.motorSW.getRPS_average() <<
-					" SE: " << motor.motorSE.getRPS_average() << std::endl;
+				std::cout << "NE: " << motor.motorNE.rps <<
+					" NW: " << motor.motorNW.rps <<
+					" SW: " << motor.motorSW.rps <<
+					" SE: " << motor.motorSE.rps << std::endl;
 
 				// std::cout << "i: " << i++ << " " <<
-				// 	motor.motorNW.rps * motor.motorNW.direction << " " <<
-				// 		motor.motorNW.rpsPID.output << " " <<
-				// 			motor.motorNW.rpsPID.error << " " <<
-				// 				motor.motorNW.rpsPID.integral_error << " " << motor.motorNW.rpsPID.target << std::endl;
+				// 	motor.motorNE.rps * motor.motorNE.direction << " " <<
+				// 		motor.motorNE.rpsPID.output << " " <<
+				// 			motor.motorNE.rpsPID.error << " " <<
+				// 				motor.motorNE.rpsPID.integral_error << std::endl;
 
-				motor.move(
-					static_cast<float>(data.robot_speed) / 10,
-					data.robot_direction,
-					data.robot_facing,
-					data.compass_yaw
-				);
+				if (!light_sensor.detection_active) {
+					if (data.robot_speed == 0 && std::abs(data.compass_yaw) < 8) {
+						PID::reset(motor.motorNW.rpsPID);
+						PID::reset(motor.motorSW.rpsPID);
+						PID::reset(motor.motorNE.rpsPID);
+						PID::reset(motor.motorSE.rpsPID);
+					}
 
-				// if (millis() - last_switch_time >= 5000) {
-				// 	temporal_variable = !temporal_variable;
-				// 	last_switch_time = millis();
-				// }
+					motor.move(
+						static_cast<float>(data.robot_speed) / SPEED_SCALE_FACTOR,
+						data.robot_direction,
+						data.robot_facing,
+						data.compass_yaw
+					);
+				}
 			}
 
 			last_motor_time = millis();
