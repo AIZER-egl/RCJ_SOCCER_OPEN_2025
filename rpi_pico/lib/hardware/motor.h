@@ -10,8 +10,8 @@
 #include "../../pico-lib/gpio.h"
 #include "../software/binarySerializationData.h"
 
-// #define ROBOT_1
-#define ROBOT_2
+#define ROBOT_1
+// #define ROBOT_2
 
 #if (!defined(ROBOT_1) && !defined(ROBOT_2))
   #error "ERROR: Debes definir ROBOT_1 o ROBOT_2. Ninguna está definida."

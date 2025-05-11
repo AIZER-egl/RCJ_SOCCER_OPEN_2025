@@ -16,7 +16,7 @@
 #define MCP_SPI_CSN 17
 
 #define NUM_LDR_SENSORS 8
-#define CALIBRATION_OFFSET 35
+#define CALIBRATION_OFFSET 30
 
 class Light_Sensor {
 public:

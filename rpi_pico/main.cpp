@@ -89,7 +89,7 @@ int main () {
 	pinMode(BUILTIN_LED, OUTPUT);
 	digitalWrite(BUILTIN_LED, HIGH);
 
-	unsigned long i = 0;
+	unsigned long light_detection_count = 0;
 	bool temporal_variable = false;
 	for (;;) {
 		bno.tick();
@@ -174,15 +174,15 @@ int main () {
 			last_led_time = millis();
 		}
 
-		if (millis() - last_kicker_time >= 25) {
-			if (data.kicker_active) {
+		if (millis() - last_kicker_time >= 5) {
+			if (data.kicker_active && robot_state == ROBOT_ON) {
 				kicker.kick();
 			}
 
 			last_kicker_time = millis();
 		}
 
-		if (millis() - last_motor_time >= 25) {
+		if (millis() - last_motor_time >= 5) {
 			if (data.robot_stop || robot_state == ROBOT_OFF) {
 				motor.stop();
 			} else {
@@ -198,7 +198,7 @@ int main () {
 				// 				motor.motorNE.rpsPID.integral_error << std::endl;
 
 				if (!light_sensor.detection_active) {
-					if (data.robot_speed == 0 && std::abs(data.compass_yaw) < 8) {
+					if (data.robot_speed == 0 && std::abs(data.compass_yaw) < 5) {
 						PID::reset(motor.motorNW.rpsPID);
 						PID::reset(motor.motorSW.rpsPID);
 						PID::reset(motor.motorNE.rpsPID);

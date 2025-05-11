@@ -87,36 +87,51 @@ void Motor::begin (BinarySerializationData& data) {
 	motorSW.rpsPID.max_output = MAX_SPEED;
 	motorSW.rpsPID.error_threshold = 0.0;
 	motorSW.rpsPID.kp = 5;
+#ifdef ROBOT_1
 	motorSW.rpsPID.ki = 50;
+#endif
+#ifdef ROBOT_2
+	motorSW.rpsPID.ki = 62;
+#endif
 	motorSW.rpsPID.kd = 0;
 
 	motorNW.rpsPID.one_direction_only = true;
 	motorNW.rpsPID.max_output = MAX_SPEED;
 	motorNW.rpsPID.error_threshold = 0.0;
 	motorNW.rpsPID.kp = 5;
+#ifdef ROBOT_1
+	motorNW.rpsPID.ki = 60;
+#endif
+#ifdef ROBOT_2
 	motorNW.rpsPID.ki = 50;
+#endif
 	motorNW.rpsPID.kd = 0;
 
 	motorNE.rpsPID.one_direction_only = true;
 	motorNE.rpsPID.max_output = MAX_SPEED;
 	motorNE.rpsPID.error_threshold = 0.0;
 	motorNE.rpsPID.kp = 5;
+#ifdef ROBOT_1
 	motorNE.rpsPID.ki = 50;
+#endif
+#ifdef ROBOT_2
+	motorNE.rpsPID.ki = 60;
+#endif
 	motorNE.rpsPID.kd = 0;
 
 	rotationPID.one_direction_only = false;
 	rotationPID.reset_within_threshold = true;
-	rotationPID.max_output = 1.5;
+	rotationPID.max_output = 3;
 	rotationPID.error_threshold = 8.0;
-	rotationPID.kp = 0.015;
-	rotationPID.ki = 0.01;
+	rotationPID.kp = 0.01;
+	rotationPID.ki = 0.02;
 	rotationPID.kd = 0.0;
 }
 
 void Motor::tick() {
 	if (!dataPtr) return;
 
-	if (millis() - previousTick >= 10) {
+	if (millis() - previousTick >= 5) {
 		motorSE.getRPS();
 		motorSW.getRPS();
 		motorNE.getRPS();
