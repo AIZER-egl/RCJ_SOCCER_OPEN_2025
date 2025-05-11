@@ -8,7 +8,7 @@ Robocup Junior Soccer Open es un juego de fútbol a escala entre dos equipos. Ca
 ![Robots](https://github.com/AIZER-egl/RCJ_SOCCER_OPEN_2025/blob/main/assets/robots.jpeg)
 _Foto de los robots pre-torneo_
 
-![Robots](https://github.com/AIZER-egl/RCJ_SOCCER_OPEN_2025/blob/main/assets/robots.jpeg)
+![Robots](https://github.com/AIZER-egl/RCJ_SOCCER_OPEN_2025/blob/main/assets/team.jpg)
 _Iker, Fátima, Alejandro_
 
 ## Technical Description Paper
