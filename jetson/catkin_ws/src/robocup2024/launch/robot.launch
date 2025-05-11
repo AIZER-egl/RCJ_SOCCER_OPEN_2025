@@ -1,7 +1,0 @@
-<launch>
-  <node pkg="robocup2024" type="rpi-serial.py" name="rpiserialpy"/>
-  <node pkg="robocup2024" type="omnicamera" name="omnicamera"/>
-  <node pkg="robocup2024" type="frontcamera" name="frontcamera"/>
-  <node pkg="robocup2024" type="pico_data_processor" name="pico_data_processor" output="screen"/>
-</launch>
-

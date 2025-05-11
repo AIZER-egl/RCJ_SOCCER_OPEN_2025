@@ -6,5 +6,5 @@ rpi_pico/.vscode/
 rpi_pico/.idea/
 jetson/catkin_ws/build
 jetson/catkin_ws/devel
-jetson/catkin_ws/src/robocup2024/.idea
-jetson/catkin_ws/src/robocup2024/out
+jetson/catkin_ws/src/robocup2025/.idea
+jetson/catkin_ws/src/robocup2025/out
